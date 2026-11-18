@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>フラッシュ三角比</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       Theme Variables (Light Mode for Classrooms & Classic Flash Anzan Dark Mode)
+       ========================================================================== */
+    :root[data-theme="light"] {
+      --bg-main: #ffffff;
+      --bg-surface: #f8fafc;
+      --bg-elevated: #ffffff;
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --border-subtle: #e5e7eb;
+      --border-strong: #d1d5db;
+      --accent-primary: #2563eb;
+      --accent-primary-hover: #1d4ed8;
+      --accent-soft: #eff6ff;
+      --accent-soft-border: #2563eb;
+      --answer-accent: #1d4ed8;
+      --answer-undefined: #dc2626;
+      --bar-track: #e5e7eb;
+      --bar-fill: #2563eb;
+      --bar-fill-glow: none;
+      --badge-bg: rgba(17, 24, 39, 0.06);
+      --shadow-card: 0 2px 10px rgba(17, 24, 39, 0.05);
+      --flash-glow: none;
+    }
+
+    :root[data-theme="dark"] {
+      --bg-main: #000000;
+      --bg-surface: #040b04;
+      --bg-elevated: #071407;
+      --text-main: #00FF41;
+      --text-muted: #22c55e;
+      --border-subtle: #008f24;
+      --border-strong: #008f24;
+      --accent-primary: #00FF41;
+      --accent-primary-hover: #39ff6a;
+      --accent-soft: rgba(0, 255, 65, 0.16);
+      --accent-soft-border: #00FF41;
+      --answer-accent: #00FF41;
+      --answer-undefined: #ff4d4d;
+      --bar-track: #061406;
+      --bar-fill: #00FF41;
+      --bar-fill-glow: 0 0 12px rgba(0, 255, 65, 0.65);
+      --badge-bg: rgba(0, 255, 65, 0.14);
+      --shadow-card: 0 0 18px rgba(0, 255, 65, 0.08);
+      --flash-glow: 0 0 12px rgba(0, 255, 65, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: background-color 0.18s ease, color 0.18s ease;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ==========================================================================
+       Persistent Top-Right Header Bar
+       ========================================================================== */
+    .floating-header-bar {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .header-pill-btn {
+      background-color: var(--bg-elevated);
+      border: 1.5px solid var(--border-strong);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      transition: all 0.14s ease;
+    }
+
+    .header-pill-btn:hover {
+      border-color: var(--accent-soft-border);
+      background-color: var(--accent-soft);
+    }
+
+    /* ==========================================================================
+       Cards & Interactive Controls
+       ========================================================================== */
+    .theme-card {
+      background-color: var(--bg-surface);
+      border: 1.5px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
+    }
+
+    .answer-card {
+      background-color: var(--bg-surface);
+      border: 2px solid var(--border-subtle);
+      box-shadow: var(--shadow-card);
+    }
+
+    .theme-btn-option {
+      background-color: var(--bg-elevated);
+      border: 2px solid var(--border-subtle);
+      color: var(--text-main);
+      transition: all 0.14s ease;
+    }
+
+    .theme-btn-option:hover {
+      border-color: var(--accent-soft-border);
+    }
+
+    .theme-btn-option.active {
+      background-color: var(--accent-soft);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      font-weight: 800;
+    }
+
+    :root[data-theme="dark"] .theme-btn-option.active {
+      color: #00FF41;
+      border-color: #00FF41;
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.25);
+    }
+
+    .theme-btn-primary {
+      background-color: var(--accent-primary);
+      color: #ffffff;
+      transition: all 0.14s ease;
+    }
+
+    .theme-btn-primary:hover {
+      background-color: var(--accent-primary-hover);
+    }
+
+    :root[data-theme="dark"] .theme-btn-primary {
+      background-color: #00FF41;
+      color: #000000;
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.35);
+    }
+
+    :root[data-theme="dark"] .theme-btn-primary:hover {
+      background-color: #39ff6a;
+    }
+
+    .theme-btn-secondary {
+      background-color: var(--bg-elevated);
+      border: 1.5px solid var(--border-strong);
+      color: var(--text-main);
+      transition: all 0.14s ease;
+    }
+
+    .theme-btn-secondary:hover {
+      border-color: var(--accent-soft-border);
+      background-color: var(--accent-soft);
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      background-color: var(--accent-primary);
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    :root[data-theme="dark"] .step-badge {
+      background-color: #00FF41;
+      color: #000000;
+    }
+
+    /* ==========================================================================
+       Setup Screen Layout (Fits 16:9 Projector Screens Cleanly)
+       ========================================================================== */
+    .setup-container {
+      max-width: 860px;
+      width: 94%;
+      margin: 0 auto;
+      padding: 68px 0 28px;
+    }
+
+    .setup-bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 639px) {
+      .setup-bottom-grid {
+        grid-template-columns: 1fr;
+      }
+      .floating-header-bar {
+        top: 8px;
+        right: 8px;
+        gap: 5px;
+      }
+      .header-pill-btn {
+        padding: 6px 9px;
+        font-size: 0.75rem;
+      }
+    }
+
+    .count-grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .count-choice-btn {
+      min-height: 48px;
+      white-space: nowrap;
+      font-weight: 700;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .tts-segmented-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      min-height: 48px;
+    }
+
+    .tts-seg-btn {
+      min-height: 48px;
+      white-space: nowrap;
+      font-weight: 700;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tts-test-full-btn {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 10px;
+      white-space: nowrap;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       Projector Mathematical Typography
+       ========================================================================== */
+    .math-expression {
+      font-family: "Times New Roman", "Cambria Math", "STIX Two Math", Georgia, serif;
+      font-size: clamp(4.5rem, 13vw, 10rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      user-select: none;
+      text-shadow: var(--flash-glow);
+    }
+
+    .math-func {
+      font-style: normal;
+      margin-right: 0.24em;
+    }
+
+    .math-angle {
+      font-variant-numeric: lining-nums;
+    }
+
+    .question-badge {
+      font-size: clamp(2.25rem, 5vw, 4.25rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      user-select: none;
+      text-shadow: var(--flash-glow);
+    }
+
+    .countdown-number {
+      font-size: clamp(7rem, 24vw, 18rem);
+      font-weight: 800;
+      line-height: 1;
+      user-select: none;
+      text-shadow: var(--flash-glow);
+    }
+
+    /* ==========================================================================
+       Vertical Stacked Fraction & Single-Path SVG Radical Styling
+       ========================================================================== */
+    .answer-problem-text {
+      font-family: "Times New Roman", "Cambria Math", Georgia, serif;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .math-answer-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Times New Roman", "Cambria Math", Georgia, serif;
+      font-weight: 700;
+      color: var(--answer-accent);
+      text-shadow: var(--flash-glow);
+    }
+
+    .math-val-group {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .math-sign {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.16em;
+      line-height: 1;
+    }
+
+    /* Continuous Single-Path Inline SVG Radical (Never clips top bar) */
+    .radical-svg {
+      display: inline-block;
+      height: 1.12em;
+      width: auto;
+      vertical-align: -0.14em;
+      overflow: visible;
+      flex-shrink: 0;
+    }
+
+    .radical-digit {
+      font-family: "Times New Roman", "Cambria Math", Georgia, serif;
+      font-weight: 700;
+      font-size: 17.5px;
+      fill: currentColor;
+      user-select: none;
+    }
+
+    .v-frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.05;
+      vertical-align: middle;
+      overflow: visible;
+    }
+
+    .v-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.18em 0.28em 0.14em;
+      text-align: center;
+      overflow: visible;
+    }
+
+    .v-bar {
+      width: 100%;
+      height: 2.5px;
+      background-color: currentColor;
+      border-radius: 999px;
+    }
+
+    .v-den {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.18em 0.28em 0.12em;
+      text-align: center;
+      overflow: visible;
+    }
+
+    .answer-undefined-text {
+      color: var(--answer-undefined);
+      font-family: "Noto Sans JP", "Inter", sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    /* ==========================================================================
+       Crisp Pop-in Animations
+       ========================================================================== */
+    @keyframes questionPopIn {
+      0% {
+        opacity: 0.2;
+        transform: scale(0.92);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .animate-pop-in {
+      animation: questionPopIn 130ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes countdownPulse {
+      0% {
+        opacity: 0.2;
+        transform: scale(0.85);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .animate-countdown {
+      animation: countdownPulse 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* ==========================================================================
+       Bottom Remaining-Time Progress Bar (14px height, turns #ef4444 < 30%)
+       ========================================================================== */
+    .progress-track {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 14px;
+      background-color: var(--bar-track);
+      z-index: 40;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+      transform-origin: left center;
+      transform: scaleX(1);
+      background-color: var(--bar-fill);
+      box-shadow: var(--bar-fill-glow);
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+      will-change: transform;
+    }
+
+    .progress-fill.warning {
+      background-color: #ef4444;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Non-blocking Toast Message -->
+  <div id="toast-banner" class="fixed top-14 left-1/2 -translate-x-1/2 z-[110] px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 bg-slate-900 text-white border border-slate-700">
+    メッセージ
+  </div>
+
+  <!-- ========================================================================
+       PERSISTENT TOP-RIGHT HEADER BAR
+       ======================================================================== -->
+  <header class="floating-header-bar" aria-label="共通コントロール">
+    <!-- Audio Toggle Button -->
+    <button id="btn-tts-toggle" type="button" class="header-pill-btn" title="問題の音声読み上げを切り替え">
+      <span id="tts-header-icon" aria-hidden="true">🔊</span>
+      <span id="tts-header-label">音声 ON</span>
+    </button>
+
+    <!-- Theme Toggle Button -->
+    <button id="btn-theme-toggle" type="button" class="header-pill-btn" title="表示テーマを切り替え">
+      <span id="theme-icon" aria-hidden="true">🌙</span>
+      <span id="theme-label">ダークモード</span>
+    </button>
+
+    <!-- Fullscreen Toggle Button -->
+    <button id="btn-fullscreen" type="button" class="header-pill-btn" title="全画面表示の切り替え">
+      <span aria-hidden="true">⛶</span>
+      <span id="fullscreen-label">全画面</span>
+    </button>
+  </header>
+
+  <!-- ========================================================================
+       SCREEN A: TITLE SCREEN (Ultra-Clean, No Subtitle/Explanatory Text)
+       ======================================================================== -->
+  <section id="screen-title" class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 flex flex-col items-center justify-center text-center">
+    <h1 class="font-extrabold mb-10 sm:mb-14 whitespace-nowrap" style="font-size: clamp(2.1rem, 8.2vw, 6.25rem); line-height: 1.1; letter-spacing: 0.04em; white-space: nowrap; text-shadow: var(--flash-glow);">
+      フラッシュ三角比
+    </h1>
+
+    <div class="w-full max-w-md">
+      <button id="btn-go-settings" type="button" class="theme-btn-primary w-full py-5 sm:py-6 px-8 rounded-2xl font-extrabold text-2xl sm:text-3xl shadow-xl cursor-pointer transition-transform active:scale-[0.99]">
+        はじめる（設定へ）
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCREEN B: SETUP SCREEN (Clean 16:9 Projector Layout)
+       ======================================================================== -->
+  <main id="screen-settings" class="hidden flex-1 w-full">
+    <div class="setup-container flex flex-col gap-4">
+      <!-- Top-Left Back Button -->
+      <div class="flex items-center justify-between">
+        <button id="btn-back-to-title" type="button" class="theme-btn-secondary px-4 py-2 rounded-xl font-bold text-sm cursor-pointer inline-flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
+          <span>← タイトルへ</span>
+        </button>
+      </div>
+
+      <!-- Section 1 Card (Full Width): Display Duration per Question -->
+      <section class="theme-card rounded-2xl p-4 sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2">
+            <span class="step-badge">1</span>
+            <span>1問あたりの表示秒数</span>
+          </h2>
+          <span class="text-xs font-semibold" style="color: var(--text-muted);">0.5秒〜30.0秒（0.5秒刻み）</span>
+        </div>
+
+        <!-- Center Stepper Row -->
+        <div class="flex items-center justify-center gap-4 sm:gap-7 my-2.5">
+          <button id="btn-duration-minus" type="button" aria-label="0.5秒減らす" class="theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+            − 0.5秒
+          </button>
+          <div class="min-w-[136px] sm:min-w-[168px] text-center">
+            <span id="display-duration" class="text-3xl sm:text-5xl font-extrabold tabular-nums">2.0</span>
+            <span class="text-lg sm:text-2xl font-bold ml-1">秒</span>
+          </div>
+          <button id="btn-duration-plus" type="button" aria-label="0.5秒増やす" class="theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+            ＋ 0.5秒
+          </button>
+        </div>
+
+        <!-- Preset Row -->
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-3">
+          <button type="button" data-preset="1.5" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">1.5秒</button>
+          <button type="button" data-preset="2" class="preset-btn theme-btn-option active py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">2秒</button>
+          <button type="button" data-preset="3" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">3秒</button>
+          <button type="button" data-preset="4" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">4秒</button>
+          <button type="button" data-preset="5" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">5秒</button>
+          <button type="button" data-preset="7" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">7秒</button>
+          <button type="button" data-preset="10" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">10秒</button>
+        </div>
+      </section>
+
+      <!-- Bottom 2-Column Grid: Question Count (Left) & Audio Settings (Right) -->
+      <div class="setup-bottom-grid">
+        <!-- Left Card: 2. Question Count (2x2 Grid) -->
+        <section class="theme-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
+            <span class="step-badge">2</span>
+            <span>出題数（重複なしランダム）</span>
+          </h2>
+
+          <div class="count-grid-2x2">
+            <button type="button" data-count="10" class="count-btn count-choice-btn theme-btn-option active">10問</button>
+            <button type="button" data-count="15" class="count-btn count-choice-btn theme-btn-option">15問</button>
+            <button type="button" data-count="20" class="count-btn count-choice-btn theme-btn-option">20問</button>
+            <button type="button" data-count="27" class="count-btn count-choice-btn theme-btn-option">全27問</button>
+          </div>
+        </section>
+
+        <!-- Right Card: 3. Voice Readout Settings -->
+        <section class="theme-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+          <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
+            <span class="step-badge">3</span>
+            <span>音声読み上げ</span>
+          </h2>
+
+          <div>
+            <!-- Top Row: 2-Column Segmented Toggle -->
+            <div class="tts-segmented-grid">
+              <button type="button" data-tts-choice="on" class="tts-choice-btn tts-seg-btn theme-btn-option active">
+                <span aria-hidden="true">🔊</span>
+                <span>ON</span>
+              </button>
+              <button type="button" data-tts-choice="off" class="tts-choice-btn tts-seg-btn theme-btn-option">
+                <span aria-hidden="true">🔇</span>
+                <span>OFF</span>
+              </button>
+            </div>
+
+            <!-- Bottom Row: Full-Width Sample Test Button -->
+            <button id="btn-tts-test" type="button" class="theme-btn-secondary tts-test-full-btn active:scale-[0.99]">
+              <span aria-hidden="true">▶</span>
+              <span>音声テスト（現在の秒数で試聴）</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Full-Width Start Button -->
+      <button id="btn-start" type="button" class="theme-btn-primary w-full py-4 sm:py-5 px-6 rounded-2xl font-extrabold text-xl sm:text-2xl shadow-lg cursor-pointer transition-transform active:scale-[0.99]">
+        スタート（スペースキーでも開始）
+      </button>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       SCREEN C: COUNTDOWN SCREEN (3 -> 2 -> 1 at 0.8s intervals)
+       ======================================================================== -->
+  <section id="screen-countdown" class="hidden flex-1 flex flex-col items-center justify-center p-6">
+    <p class="text-2xl sm:text-4xl font-extrabold tracking-wide mb-4 sm:mb-6" style="color: var(--text-muted);">
+      準備してください
+    </p>
+    <div id="countdown-value" class="countdown-number tabular-nums">3</div>
+    <button id="btn-cancel-countdown" type="button" class="theme-btn-secondary mt-10 px-5 py-2.5 rounded-xl font-bold text-sm cursor-pointer">
+      設定画面へ戻る (Esc)
+    </button>
+  </section>
+
+  <!-- ========================================================================
+       SCREEN D: FLASH QUIZ SCREEN (Continuous, Giant Text, Bottom Progress Bar)
+       ======================================================================== -->
+  <section id="screen-active" class="hidden flex-1 flex flex-col justify-between pb-5 pt-14 sm:pt-16">
+    <!-- Top Progress & Controls Bar -->
+    <div class="w-full px-5 sm:px-10 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span id="progress-counter" class="text-lg sm:text-2xl font-extrabold tabular-nums" style="color: var(--text-muted);">
+          Q1 / 10
+        </span>
+        <span id="paused-badge" class="hidden px-3.5 py-1 rounded-xl text-sm sm:text-base font-extrabold bg-amber-400 text-slate-950 shadow">
+          一時停止中（Spaceで再開）
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-pause" type="button" class="theme-btn-secondary px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+          一時停止 (Space)
+        </button>
+        <button id="btn-abort" type="button" class="theme-btn-secondary px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+          中断 (Esc)
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Question Badge & Giant Expression -->
+    <div class="flex-1 flex flex-col items-center justify-center px-4 overflow-hidden">
+      <div id="question-number" class="question-badge mb-3 sm:mb-5">Q1</div>
+      <div id="question-display" class="math-expression text-center">
+        <span id="math-func" class="math-func">sin</span><span id="math-angle" class="math-angle">30°</span>
+      </div>
+    </div>
+
+    <!-- Bottom 14px Remaining-Time Progress Bar -->
+    <div class="progress-track" aria-hidden="true">
+      <div id="progress-fill" class="progress-fill"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCREEN E: FINISH SCREEN
+       ======================================================================== -->
+  <section id="screen-finish" class="hidden flex-1 flex flex-col items-center justify-center p-6 pt-16">
+    <div class="text-center max-w-2xl w-full">
+      <h2 class="font-extrabold tracking-tight mb-3" style="font-size: clamp(4.5rem, 15vw, 9.5rem); line-height: 1.05; text-shadow: var(--flash-glow);">
+        終了！
+      </h2>
+      <p id="finish-count-text" class="text-2xl sm:text-4xl font-extrabold mb-9 sm:mb-11" style="color: var(--text-muted);">
+        全10問 完了
+      </p>
+
+      <div class="max-w-lg mx-auto space-y-4">
+        <button id="btn-check-answers" type="button" class="theme-btn-primary w-full py-5 sm:py-6 px-6 rounded-2xl font-extrabold text-2xl sm:text-3xl shadow-xl cursor-pointer transition-transform active:scale-[0.99] flex items-center justify-center gap-3">
+          <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>答え合わせ</span>
+        </button>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button id="btn-retry-from-finish" type="button" class="theme-btn-secondary py-3.5 px-5 rounded-xl font-extrabold text-base sm:text-lg cursor-pointer active:scale-[0.99]">
+            同じ設定でもう一度
+          </button>
+          <button id="btn-settings-from-finish" type="button" class="theme-btn-secondary py-3.5 px-5 rounded-xl font-extrabold text-base sm:text-lg cursor-pointer active:scale-[0.99]">
+            設定画面へ戻る
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCREEN F: ANSWER REVIEW SCREEN (答え合わせ一覧)
+       ======================================================================== -->
+  <section id="screen-answers" class="hidden flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-6 flex flex-col justify-between">
+    <!-- Top Control Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b" style="border-color: var(--border-subtle);">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">答え合わせ一覧</h2>
+        <p id="answers-subtitle" class="text-xs sm:text-sm font-semibold mt-0.5" style="color: var(--text-muted);">
+          出題順（全10問）の模範解答
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" data-nav="finish" class="answer-nav-btn theme-btn-secondary px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+          ← 終了画面へ戻る
+        </button>
+        <button type="button" data-nav="settings" class="answer-nav-btn theme-btn-secondary px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+          設定画面へ戻る
+        </button>
+        <button type="button" data-nav="retry" class="answer-nav-btn theme-btn-primary px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm cursor-pointer whitespace-nowrap">
+          もう一度挑戦
+        </button>
+      </div>
+    </div>
+
+    <!-- Responsive Grid of Q1..Qn Answer Cards -->
+    <div id="answers-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 my-auto">
+      <!-- Dynamically populated -->
+    </div>
+
+    <!-- Bottom Control Bar -->
+    <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 mt-6 pt-4 border-t" style="border-color: var(--border-subtle);">
+      <button type="button" data-nav="finish" class="answer-nav-btn theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm cursor-pointer whitespace-nowrap">
+        ← 終了画面へ戻る
+      </button>
+      <button type="button" data-nav="settings" class="answer-nav-btn theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm cursor-pointer whitespace-nowrap">
+        設定画面へ戻る
+      </button>
+      <button type="button" data-nav="retry" class="answer-nav-btn theme-btn-primary px-4 py-2.5 rounded-xl font-extrabold text-sm cursor-pointer whitespace-nowrap">
+        もう一度挑戦
+      </button>
+    </div>
+  </section>
+
+  <script>
+    /**
+     * フラッシュ三角比 (Classroom Projector Web Application)
+     * - 0°〜180° の有名角9種 × (sin, cos, tan) = 全27通り（tan 90° -> なし を含む）
+     * - Fisher-Yates シャッフルによる重複なしランダム出題
+     * - 表示秒数に応じた自動速度調整付き日本語音声読み上げ (ja-JP)
+     * - 縦分数＋単一連続パスSVGルートによる標準模範解答一覧
+     */
+    (function () {
+      'use strict';
+
+      // ======================================================================
+      // 1. Complete 27-Item Pool & Standard Textbook Values
+      // ======================================================================
+      const ANGLES = [0, 30, 45, 60, 90, 120, 135, 150, 180];
+      const FUNCTIONS = ['sin', 'cos', 'tan'];
+
+      const EXACT_ANSWERS = {
+        // sin (0° to 180°)
+        'sin_0':   { type: 'int', val: '0' },
+        'sin_30':  { type: 'frac', sign: '', num: '1', den: '2' },
+        'sin_45':  { type: 'frac', sign: '', num: '1', den: '√2' },
+        'sin_60':  { type: 'frac', sign: '', num: '√3', den: '2' },
+        'sin_90':  { type: 'int', val: '1' },
+        'sin_120': { type: 'frac', sign: '', num: '√3', den: '2' },
+        'sin_135': { type: 'frac', sign: '', num: '1', den: '√2' },
+        'sin_150': { type: 'frac', sign: '', num: '1', den: '2' },
+        'sin_180': { type: 'int', val: '0' },
+
+        // cos (0° to 180°)
+        'cos_0':   { type: 'int', val: '1' },
+        'cos_30':  { type: 'frac', sign: '', num: '√3', den: '2' },
+        'cos_45':  { type: 'frac', sign: '', num: '1', den: '√2' },
+        'cos_60':  { type: 'frac', sign: '', num: '1', den: '2' },
+        'cos_90':  { type: 'int', val: '0' },
+        'cos_120': { type: 'frac', sign: '−', num: '1', den: '2' },
+        'cos_135': { type: 'frac', sign: '−', num: '1', den: '√2' },
+        'cos_150': { type: 'frac', sign: '−', num: '√3', den: '2' },
+        'cos_180': { type: 'int', val: '−1' },
+
+        // tan (0° to 180°, including tan 90° = なし)
+        'tan_0':   { type: 'int', val: '0' },
+        'tan_30':  { type: 'frac', sign: '', num: '1', den: '√3' },
+        'tan_45':  { type: 'int', val: '1' },
+        'tan_60':  { type: 'rad', sign: '', digit: '3' },
+        'tan_90':  { type: 'undefined', val: 'なし' },
+        'tan_120': { type: 'rad', sign: '−', digit: '3' },
+        'tan_135': { type: 'int', val: '−1' },
+        'tan_150': { type: 'frac', sign: '−', num: '1', den: '√3' },
+        'tan_180': { type: 'int', val: '0' }
+      };
+
+      function buildFullPool() {
+        const pool = [];
+        for (const func of FUNCTIONS) {
+          for (const angle of ANGLES) {
+            pool.push({ func, angle });
+          }
+        }
+        return pool; // 27 items
+      }
+
+      function shuffleArray(array) {
+        const copy = array.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = temp;
+        }
+        return copy;
+      }
+
+      // ======================================================================
+      // 2. Application State
+      // ======================================================================
+      const state = {
+        screen: 'title',        // 'title' | 'settings' | 'countdown' | 'active' | 'finish' | 'answers'
+        durationSec: 2.0,       // Default 2.0s (range 0.5s to 30.0s in 0.5s increments)
+        questionCount: 10,      // Default 10 (10 | 15 | 20 | 27)
+        theme: 'light',         // 'light' | 'dark'
+        ttsEnabled: true,       // Japanese Web Speech API readout
+
+        // Active session runtime
+        questions: [],
+        currentIndex: 0,
+        isPaused: false,
+        questionStartTime: 0,
+        pausedElapsed: 0,
+        rafId: null,
+        countdownTimerId: null
+      };
+
+      // ======================================================================
+      // 3. DOM Cache
+      // ======================================================================
+      const el = {
+        toast: document.getElementById('toast-banner'),
+        btnTtsToggle: document.getElementById('btn-tts-toggle'),
+        ttsHeaderIcon: document.getElementById('tts-header-icon'),
+        ttsHeaderLabel: document.getElementById('tts-header-label'),
+        btnThemeToggle: document.getElementById('btn-theme-toggle'),
+        themeIcon: document.getElementById('theme-icon'),
+        themeLabel: document.getElementById('theme-label'),
+        btnFullscreen: document.getElementById('btn-fullscreen'),
+        fullscreenLabel: document.getElementById('fullscreen-label'),
+
+        screens: {
+          title: document.getElementById('screen-title'),
+          settings: document.getElementById('screen-settings'),
+          countdown: document.getElementById('screen-countdown'),
+          active: document.getElementById('screen-active'),
+          finish: document.getElementById('screen-finish'),
+          answers: document.getElementById('screen-answers')
+        },
+
+        // Screen A: Title
+        btnGoSettings: document.getElementById('btn-go-settings'),
+
+        // Screen B: Settings
+        btnBackToTitle: document.getElementById('btn-back-to-title'),
+        btnDurationMinus: document.getElementById('btn-duration-minus'),
+        btnDurationPlus: document.getElementById('btn-duration-plus'),
+        displayDuration: document.getElementById('display-duration'),
+        presetBtns: document.querySelectorAll('.preset-btn'),
+        countBtns: document.querySelectorAll('.count-btn'),
+        ttsChoiceBtns: document.querySelectorAll('.tts-choice-btn'),
+        btnTtsTest: document.getElementById('btn-tts-test'),
+        btnStart: document.getElementById('btn-start'),
+
+        // Screen C: Countdown
+        countdownValue: document.getElementById('countdown-value'),
+        btnCancelCountdown: document.getElementById('btn-cancel-countdown'),
+
+        // Screen D: Active Quiz
+        questionNumber: document.getElementById('question-number'),
+        pausedBadge: document.getElementById('paused-badge'),
+        progressCounter: document.getElementById('progress-counter'),
+        btnPause: document.getElementById('btn-pause'),
+        btnAbort: document.getElementById('btn-abort'),
+        questionDisplay: document.getElementById('question-display'),
+        mathFunc: document.getElementById('math-func'),
+        mathAngle: document.getElementById('math-angle'),
+        progressFill: document.getElementById('progress-fill'),
+
+        // Screen E: Finish
+        finishCountText: document.getElementById('finish-count-text'),
+        btnCheckAnswers: document.getElementById('btn-check-answers'),
+        btnRetryFromFinish: document.getElementById('btn-retry-from-finish'),
+        btnSettingsFromFinish: document.getElementById('btn-settings-from-finish'),
+
+        // Screen F: Answer Review
+        answersSubtitle: document.getElementById('answers-subtitle'),
+        answersGrid: document.getElementById('answers-grid'),
+        answerNavBtns: document.querySelectorAll('.answer-nav-btn')
+      };
+
+      // ======================================================================
+      // 4. Japanese Speech Synthesis (ja-JP) with Dynamic Speed Scaling
+      // ======================================================================
+      const FUNC_READINGS = {
+        sin: 'サイン',
+        cos: 'コサイン',
+        tan: 'タンジェント'
+      };
+
+      let preferredJaVoice = null;
+      let speechTimerId = null;
+
+      function loadJapaneseVoice() {
+        if (!('speechSynthesis' in window)) return;
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+        preferredJaVoice =
+          voices.find((v) => v.lang === 'ja-JP') ||
+          voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('ja')) ||
+          null;
+      }
+
+      if ('speechSynthesis' in window) {
+        loadJapaneseVoice();
+        window.speechSynthesis.onvoiceschanged = loadJapaneseVoice;
+      }
+
+      /**
+       * Adjusts utterance.rate based on durationSec so readout finishes
+       * comfortably before the next question appears:
+       * 0.5s -> 3.0 | 1.0s -> 2.3 | 1.5s -> 1.8 | 2.0s -> 1.35 | >=3.0s -> 1.15
+       */
+      function computeSpeechRate(durationSec) {
+        const d = Math.max(0.5, durationSec);
+        let rate = 1.15;
+        if (d >= 3.0) {
+          rate = 1.15;
+        } else if (d >= 2.0) {
+          rate = 1.35 - ((d - 2.0) / 1.0) * (1.35 - 1.15);
+        } else if (d >= 1.5) {
+          rate = 1.8 - ((d - 1.5) / 0.5) * (1.8 - 1.35);
+        } else if (d >= 1.0) {
+          rate = 2.3 - ((d - 1.0) / 0.5) * (2.3 - 1.8);
+        } else {
+          rate = 3.0 - ((d - 0.5) / 0.5) * (3.0 - 2.3);
+        }
+        return Math.max(0.8, Math.min(3.5, Math.round(rate * 100) / 100));
+      }
+
+      function cancelSpeech() {
+        if (speechTimerId !== null) {
+          clearTimeout(speechTimerId);
+          speechTimerId = null;
+        }
+        if ('speechSynthesis' in window) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (err) {
+            // Ignore cancellation errors
+          }
+        }
+      }
+
+      function speakProblem(func, angle, isTest = false) {
+        if (!isTest && !state.ttsEnabled) return;
+        if (!('speechSynthesis' in window)) {
+          if (isTest) {
+            showToast('このブラウザは音声読み上げに対応していません');
+          }
+          return;
+        }
+
+        const wasSpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+        cancelSpeech();
+
+        const triggerUtterance = () => {
+          if (!isTest && (state.screen !== 'active' || state.isPaused || !state.ttsEnabled)) {
+            return;
+          }
+          try {
+            const phrase = `${FUNC_READINGS[func]} ${angle}ど`;
+            const utterance = new SpeechSynthesisUtterance(phrase);
+            utterance.lang = 'ja-JP';
+            if (preferredJaVoice) {
+              utterance.voice = preferredJaVoice;
+            }
+            utterance.rate = computeSpeechRate(state.durationSec);
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            window.speechSynthesis.speak(utterance);
+          } catch (err) {
+            // Ignore restricted speech errors
+          }
+        };
+
+        if (wasSpeaking) {
+          speechTimerId = setTimeout(triggerUtterance, 15);
+        } else {
+          triggerUtterance();
+        }
+      }
+
+      // ======================================================================
+      // 5. Toast Helper
+      // ======================================================================
+      let toastTimeoutId = null;
+
+      function showToast(message) {
+        el.toast.textContent = message;
+        el.toast.classList.remove('opacity-0');
+        el.toast.classList.add('opacity-100');
+        if (toastTimeoutId) clearTimeout(toastTimeoutId);
+        toastTimeoutId = setTimeout(() => {
+          el.toast.classList.remove('opacity-100');
+          el.toast.classList.add('opacity-0');
+        }, 2500);
+      }
+
+      // ======================================================================
+      // 6. Screen Navigation & Global Header Controls
+      // ======================================================================
+      function switchScreen(targetScreen) {
+        state.screen = targetScreen;
+        Object.keys(el.screens).forEach((key) => {
+          if (key === targetScreen) {
+            el.screens[key].classList.remove('hidden');
+          } else {
+            el.screens[key].classList.add('hidden');
+          }
+        });
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+      }
+
+      function toggleTheme() {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', state.theme);
+        if (state.theme === 'light') {
+          el.themeIcon.textContent = '🌙';
+          el.themeLabel.textContent = 'ダークモード';
+        } else {
+          el.themeIcon.textContent = '☀️';
+          el.themeLabel.textContent = '白背景';
+        }
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {
+            showToast('全画面表示が制限されています（F11キーをお試しください）');
+          });
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+
+      document.addEventListener('fullscreenchange', () => {
+        el.fullscreenLabel.textContent = document.fullscreenElement ? '全画面解除' : '全画面';
+      });
+
+      // ======================================================================
+      // 7. Setup Controls Synchronization
+      // ======================================================================
+      function updateDurationUI() {
+        el.displayDuration.textContent = state.durationSec.toFixed(1);
+        el.presetBtns.forEach((btn) => {
+          const val = parseFloat(btn.dataset.preset);
+          btn.classList.toggle('active', Math.abs(val - state.durationSec) < 0.01);
+        });
+      }
+
+      function setDuration(seconds) {
+        const clamped = Math.max(0.5, Math.min(30.0, Math.round(seconds * 10) / 10));
+        state.durationSec = clamped;
+        updateDurationUI();
+      }
+
+      function setQuestionCount(count) {
+        state.questionCount = count;
+        el.countBtns.forEach((btn) => {
+          btn.classList.toggle('active', parseInt(btn.dataset.count, 10) === count);
+        });
+      }
+
+      function setTtsEnabled(enabled) {
+        state.ttsEnabled = enabled;
+        el.ttsHeaderIcon.textContent = enabled ? '🔊' : '🔇';
+        el.ttsHeaderLabel.textContent = enabled ? '音声 ON' : '音声 OFF';
+        el.ttsChoiceBtns.forEach((btn) => {
+          const isOn = btn.dataset.ttsChoice === 'on';
+          btn.classList.toggle('active', isOn === enabled);
+        });
+        if (!enabled) {
+          cancelSpeech();
+        }
+      }
+
+      // ======================================================================
+      // 8. Drill Session Execution (Countdown -> Continuous Flash -> Finish)
+      // ======================================================================
+      function clearTimers() {
+        if (state.rafId !== null) {
+          cancelAnimationFrame(state.rafId);
+          state.rafId = null;
+        }
+        if (state.countdownTimerId !== null) {
+          clearInterval(state.countdownTimerId);
+          state.countdownTimerId = null;
+        }
+        cancelSpeech();
+      }
+
+      function startDrillSession() {
+        clearTimers();
+
+        const fullPool = buildFullPool();
+        const shuffled = shuffleArray(fullPool);
+        state.questions = shuffled.slice(0, state.questionCount);
+        state.currentIndex = 0;
+        state.isPaused = false;
+        state.pausedElapsed = 0;
+
+        runCountdown();
+      }
+
+      function runCountdown() {
+        switchScreen('countdown');
+        let count = 3;
+        renderCountdownNumber(count);
+
+        state.countdownTimerId = setInterval(() => {
+          count -= 1;
+          if (count >= 1) {
+            renderCountdownNumber(count);
+          } else {
+            clearInterval(state.countdownTimerId);
+            state.countdownTimerId = null;
+            beginActiveQuestions();
+          }
+        }, 800);
+      }
+
+      function renderCountdownNumber(num) {
+        el.countdownValue.textContent = String(num);
+        el.countdownValue.classList.remove('animate-countdown');
+        void el.countdownValue.offsetWidth;
+        el.countdownValue.classList.add('animate-countdown');
+      }
+
+      function beginActiveQuestions() {
+        switchScreen('active');
+        state.isPaused = false;
+        updatePauseUI();
+        renderQuestion(0);
+        state.questionStartTime = performance.now();
+        state.rafId = requestAnimationFrame(tickActiveLoop);
+      }
+
+      function renderQuestion(index) {
+        const item = state.questions[index];
+        const total = state.questions.length;
+
+        el.questionNumber.textContent = `Q${index + 1}`;
+        el.progressCounter.textContent = `Q${index + 1} / ${total}`;
+        el.mathFunc.textContent = item.func;
+        el.mathAngle.textContent = `${item.angle}°`;
+
+        el.questionDisplay.classList.remove('animate-pop-in');
+        void el.questionDisplay.offsetWidth;
+        el.questionDisplay.classList.add('animate-pop-in');
+
+        el.progressFill.classList.remove('warning');
+        el.progressFill.style.transform = 'scaleX(1)';
+
+        speakProblem(item.func, item.angle, false);
+      }
+
+      function tickActiveLoop(now) {
+        if (state.screen !== 'active' || state.isPaused) return;
+
+        const durationMs = state.durationSec * 1000;
+        const elapsed = now - state.questionStartTime;
+
+        if (elapsed >= durationMs) {
+          const nextIndex = state.currentIndex + 1;
+          if (nextIndex < state.questions.length) {
+            state.currentIndex = nextIndex;
+            state.questionStartTime = now - (elapsed - durationMs);
+            renderQuestion(state.currentIndex);
+            state.rafId = requestAnimationFrame(tickActiveLoop);
+          } else {
+            finishDrillSession();
+          }
+          return;
+        }
+
+        const remainingRatio = Math.max(0, Math.min(1, 1 - elapsed / durationMs));
+        el.progressFill.style.transform = `scaleX(${remainingRatio})`;
+
+        // Turns bright red (#ef4444) when remaining time drops below 30%
+        if (remainingRatio < 0.30) {
+          el.progressFill.classList.add('warning');
+        } else {
+          el.progressFill.classList.remove('warning');
+        }
+
+        state.rafId = requestAnimationFrame(tickActiveLoop);
+      }
+
+      function togglePause() {
+        if (state.screen !== 'active') return;
+
+        if (!state.isPaused) {
+          state.isPaused = true;
+          state.pausedElapsed = performance.now() - state.questionStartTime;
+          cancelSpeech();
+          if (state.rafId !== null) {
+            cancelAnimationFrame(state.rafId);
+            state.rafId = null;
+          }
+        } else {
+          state.isPaused = false;
+          state.questionStartTime = performance.now() - state.pausedElapsed;
+          state.rafId = requestAnimationFrame(tickActiveLoop);
+        }
+        updatePauseUI();
+      }
+
+      function updatePauseUI() {
+        if (state.isPaused) {
+          el.pausedBadge.classList.remove('hidden');
+          el.btnPause.textContent = '再開 (Space)';
+        } else {
+          el.pausedBadge.classList.add('hidden');
+          el.btnPause.textContent = '一時停止 (Space)';
+        }
+      }
+
+      function finishDrillSession() {
+        clearTimers();
+        el.progressFill.style.transform = 'scaleX(0)';
+        el.finishCountText.textContent = `全${state.questions.length}問 完了`;
+        switchScreen('finish');
+      }
+
+      function returnToSettings() {
+        clearTimers();
+        state.isPaused = false;
+        switchScreen('settings');
+      }
+
+      // ======================================================================
+      // 9. Answer Review Screen (Continuous Single-Path SVG Radicals)
+      // ======================================================================
+
+      /**
+       * Renders √2 or √3 using a continuous single-path inline SVG
+       * (viewBox="0 0 34 28", top bar at y="4") so the top bar never clips.
+       */
+      function renderRadicalSVG(digit) {
+        return `
+          <svg class="radical-svg" viewBox="0 0 34 28" aria-label="ルート${digit}" role="img">
+            <path
+              d="M 2 16 L 6 16 L 11.5 25 L 17.5 4 L 32 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <text
+              x="24.5"
+              y="17.5"
+              dominant-baseline="central"
+              text-anchor="middle"
+              class="radical-digit"
+            >${digit}</text>
+          </svg>
+        `;
+      }
+
+      function renderMathToken(token) {
+        if (token.startsWith('√')) {
+          return renderRadicalSVG(token.slice(1));
+        }
+        return `<span>${token}</span>`;
+      }
+
+      function buildVerticalFractionHTML(sign, num, den) {
+        const signHTML = sign ? `<span class="math-sign">${sign}</span>` : '';
+        return `
+          <span class="math-val-group">
+            ${signHTML}
+            <span class="v-frac">
+              <span class="v-num">${renderMathToken(num)}</span>
+              <span class="v-bar"></span>
+              <span class="v-den">${renderMathToken(den)}</span>
+            </span>
+          </span>
+        `;
+      }
+
+      function buildAnswerHTML(func, angle) {
+        const key = `${func}_${angle}`;
+        const ans = EXACT_ANSWERS[key];
+        if (!ans) return '';
+
+        if (ans.type === 'undefined') {
+          return `<span class="answer-undefined-text text-2xl sm:text-3xl">${ans.val}</span>`;
+        }
+
+        if (ans.type === 'int') {
+          return `<span class="math-answer-wrap text-3xl sm:text-4xl">${ans.val}</span>`;
+        }
+
+        if (ans.type === 'rad') {
+          const signHTML = ans.sign ? `<span class="math-sign">${ans.sign}</span>` : '';
+          return `
+            <span class="math-answer-wrap text-3xl sm:text-4xl">
+              <span class="math-val-group">
+                ${signHTML}${renderRadicalSVG(ans.digit)}
+              </span>
+            </span>
+          `;
+        }
+
+        return `
+          <span class="math-answer-wrap text-2xl sm:text-3xl">
+            ${buildVerticalFractionHTML(ans.sign, ans.num, ans.den)}
+          </span>
+        `;
+      }
+
+      function showAnswerReview() {
+        const total = state.questions.length;
+        el.answersSubtitle.textContent = `今回の出題順（全${total}問・1問 ${state.durationSec.toFixed(1)}秒）の模範解答`;
+        el.answersGrid.innerHTML = '';
+
+        state.questions.forEach((item, index) => {
+          const card = document.createElement('article');
+          card.className = 'answer-card rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between min-h-[126px] sm:min-h-[144px]';
+
+          const answerHTML = buildAnswerHTML(item.func, item.angle);
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2 pb-2 border-b" style="border-color: var(--border-subtle);">
+              <span class="px-2.5 py-0.5 rounded-lg text-xs sm:text-sm font-extrabold" style="background-color: var(--badge-bg); color: var(--text-muted);">
+                Q${index + 1}
+              </span>
+              <span class="answer-problem-text text-xl sm:text-2xl">
+                ${item.func} ${item.angle}°
+              </span>
+            </div>
+            <div class="flex-1 flex items-center justify-center pt-2.5 pb-1">
+              ${answerHTML}
+            </div>
+          `;
+
+          el.answersGrid.appendChild(card);
+        });
+
+        switchScreen('answers');
+      }
+
+      // ======================================================================
+      // 10. Event Listeners
+      // ======================================================================
+      el.btnTtsToggle.addEventListener('click', () => {
+        setTtsEnabled(!state.ttsEnabled);
+      });
+      el.btnThemeToggle.addEventListener('click', toggleTheme);
+      el.btnFullscreen.addEventListener('click', toggleFullscreen);
+
+      el.btnGoSettings.addEventListener('click', () => {
+        switchScreen('settings');
+      });
+
+      el.btnBackToTitle.addEventListener('click', () => {
+        switchScreen('title');
+      });
+
+      el.btnDurationMinus.addEventListener('click', () => {
+        setDuration(state.durationSec - 0.5);
+      });
+
+      el.btnDurationPlus.addEventListener('click', () => {
+        setDuration(state.durationSec + 0.5);
+      });
+
+      el.presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setDuration(parseFloat(btn.dataset.preset));
+        });
+      });
+
+      el.countBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setQuestionCount(parseInt(btn.dataset.count, 10));
+        });
+      });
+
+      el.ttsChoiceBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setTtsEnabled(btn.dataset.ttsChoice === 'on');
+        });
+      });
+
+      el.btnTtsTest.addEventListener('click', () => {
+        speakProblem('sin', 30, true);
+      });
+
+      el.btnStart.addEventListener('click', startDrillSession);
+      el.btnCancelCountdown.addEventListener('click', returnToSettings);
+      el.btnPause.addEventListener('click', togglePause);
+      el.btnAbort.addEventListener('click', returnToSettings);
+
+      el.btnCheckAnswers.addEventListener('click', showAnswerReview);
+      el.btnRetryFromFinish.addEventListener('click', startDrillSession);
+      el.btnSettingsFromFinish.addEventListener('click', returnToSettings);
+
+      el.answerNavBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.nav;
+          if (target === 'finish') {
+            switchScreen('finish');
+          } else if (target === 'retry') {
+            startDrillSession();
+          } else if (target === 'settings') {
+            returnToSettings();
+          }
+        });
+      });
+
+      // Keyboard Shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+
+        if (state.screen === 'title') {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            switchScreen('settings');
+          }
+        } else if (state.screen === 'settings') {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            startDrillSession();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            switchScreen('title');
+          } else if (e.key === 'ArrowLeft') {
+            setDuration(state.durationSec - 0.5);
+          } else if (e.key === 'ArrowRight') {
+            setDuration(state.durationSec + 0.5);
+          }
+        } else if (state.screen === 'countdown') {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            returnToSettings();
+          }
+        } else if (state.screen === 'active') {
+          if (e.key === ' ') {
+            e.preventDefault();
+            togglePause();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            returnToSettings();
+          }
+        } else if (state.screen === 'finish') {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            showAnswerReview();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            returnToSettings();
+          }
+        } else if (state.screen === 'answers') {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            switchScreen('finish');
+          }
+        }
+      });
+
+      // Initialize UI
+      updateDurationUI();
+      setQuestionCount(10);
+      setTtsEnabled(true);
+    })();
+  </script>
+</body>
+</html>
