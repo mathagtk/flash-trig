@@ -205,22 +205,13 @@
        Setup Screen Layout (Fits 16:9 Projector Screens Cleanly)
        ========================================================================== */
     .setup-container {
-      max-width: 860px;
+      max-width: 820px;
       width: 94%;
       margin: 0 auto;
-      padding: 68px 0 28px;
-    }
-
-    .setup-bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      padding: 64px 0 28px;
     }
 
     @media (max-width: 639px) {
-      .setup-bottom-grid {
-        grid-template-columns: 1fr;
-      }
       .floating-header-bar {
         top: 8px;
         right: 8px;
@@ -232,10 +223,17 @@
       }
     }
 
-    .count-grid-2x2 {
+    /* 4-Column Grid for Question Count (2 Columns on <= 520px) */
+    .count-grid-4col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .count-grid-4col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     .count-choice-btn {
@@ -247,30 +245,46 @@
       cursor: pointer;
     }
 
-    .tts-segmented-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    /* Horizontal Audio Card Layout (Left: Title/Desc, Right: Segmented Toggle + Test) */
+    .tts-card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tts-controls-group {
+      display: flex;
+      align-items: center;
       gap: 10px;
-      min-height: 48px;
+      flex-wrap: wrap;
+    }
+
+    .tts-segmented-wrap {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
     }
 
     .tts-seg-btn {
-      min-height: 48px;
+      min-height: 44px;
+      min-width: 78px;
+      padding: 0 12px;
       white-space: nowrap;
       font-weight: 700;
       border-radius: 12px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
     }
 
-    .tts-test-full-btn {
-      width: 100%;
+    .tts-test-btn {
       min-height: 44px;
-      margin-top: 10px;
+      padding: 0 14px;
       white-space: nowrap;
       border-radius: 12px;
       font-weight: 700;
@@ -490,16 +504,16 @@
        PERSISTENT TOP-RIGHT HEADER BAR
        ======================================================================== -->
   <header class="floating-header-bar" aria-label="共通コントロール">
-    <!-- Audio Toggle Button -->
-    <button id="btn-tts-toggle" type="button" class="header-pill-btn" title="問題の音声読み上げを切り替え">
-      <span id="tts-header-icon" aria-hidden="true">🔊</span>
-      <span id="tts-header-label">音声 ON</span>
-    </button>
-
     <!-- Theme Toggle Button -->
     <button id="btn-theme-toggle" type="button" class="header-pill-btn" title="表示テーマを切り替え">
       <span id="theme-icon" aria-hidden="true">🌙</span>
       <span id="theme-label">ダークモード</span>
+    </button>
+
+    <!-- Audio Toggle Button -->
+    <button id="btn-tts-toggle" type="button" class="header-pill-btn" title="問題の音声読み上げを切り替え">
+      <span id="tts-header-icon" aria-hidden="true">🔊</span>
+      <span id="tts-header-label">音声 ON</span>
     </button>
 
     <!-- Fullscreen Toggle Button -->
@@ -538,7 +552,7 @@
 
       <!-- Section 1 Card (Full Width): Display Duration per Question -->
       <section class="theme-card rounded-2xl p-4 sm:p-5">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
           <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2">
             <span class="step-badge">1</span>
             <span>1問あたりの表示秒数</span>
@@ -547,21 +561,21 @@
         </div>
 
         <!-- Center Stepper Row -->
-        <div class="flex items-center justify-center gap-4 sm:gap-7 my-2.5">
-          <button id="btn-duration-minus" type="button" aria-label="0.5秒減らす" class="theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+        <div class="flex items-center justify-center gap-4 sm:gap-7 my-2">
+          <button id="btn-duration-minus" type="button" aria-label="0.5秒減らす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
             − 0.5秒
           </button>
           <div class="min-w-[136px] sm:min-w-[168px] text-center">
             <span id="display-duration" class="text-3xl sm:text-5xl font-extrabold tabular-nums">2.0</span>
             <span class="text-lg sm:text-2xl font-bold ml-1">秒</span>
           </div>
-          <button id="btn-duration-plus" type="button" aria-label="0.5秒増やす" class="theme-btn-secondary px-4 py-2.5 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+          <button id="btn-duration-plus" type="button" aria-label="0.5秒増やす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
             ＋ 0.5秒
           </button>
         </div>
 
         <!-- Preset Row -->
-        <div class="flex flex-wrap items-center justify-center gap-2 mt-3">
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-2.5">
           <button type="button" data-preset="1.5" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">1.5秒</button>
           <button type="button" data-preset="2" class="preset-btn theme-btn-option active py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">2秒</button>
           <button type="button" data-preset="3" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">3秒</button>
@@ -572,51 +586,53 @@
         </div>
       </section>
 
-      <!-- Bottom 2-Column Grid: Question Count (Left) & Audio Settings (Right) -->
-      <div class="setup-bottom-grid">
-        <!-- Left Card: 2. Question Count (2x2 Grid) -->
-        <section class="theme-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-          <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
-            <span class="step-badge">2</span>
-            <span>出題数（重複なしランダム）</span>
-          </h2>
+      <!-- Section 2 Card (Full Width): Question Count (4-Col Grid, 2-Col on <= 520px) -->
+      <section class="theme-card rounded-2xl p-4 sm:p-5">
+        <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
+          <span class="step-badge">2</span>
+          <span>出題数（重複なしランダム）</span>
+        </h2>
 
-          <div class="count-grid-2x2">
-            <button type="button" data-count="10" class="count-btn count-choice-btn theme-btn-option active">10問</button>
-            <button type="button" data-count="15" class="count-btn count-choice-btn theme-btn-option">15問</button>
-            <button type="button" data-count="20" class="count-btn count-choice-btn theme-btn-option">20問</button>
-            <button type="button" data-count="27" class="count-btn count-choice-btn theme-btn-option">全27問</button>
-          </div>
-        </section>
+        <div class="count-grid-4col">
+          <button type="button" data-count="10" class="count-btn count-choice-btn theme-btn-option active">10問</button>
+          <button type="button" data-count="15" class="count-btn count-choice-btn theme-btn-option">15問</button>
+          <button type="button" data-count="20" class="count-btn count-choice-btn theme-btn-option">20問</button>
+          <button type="button" data-count="27" class="count-btn count-choice-btn theme-btn-option">全27問</button>
+        </div>
+      </section>
 
-        <!-- Right Card: 3. Voice Readout Settings -->
-        <section class="theme-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-          <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
-            <span class="step-badge">3</span>
-            <span>音声読み上げ</span>
-          </h2>
-
+      <!-- Section 3 Card (Horizontal Layout: Left Title/Desc, Right Segmented Toggle + Test) -->
+      <section class="theme-card rounded-2xl p-4 sm:p-5">
+        <div class="tts-card-row">
           <div>
-            <!-- Top Row: 2-Column Segmented Toggle -->
-            <div class="tts-segmented-grid">
-              <button type="button" data-tts-choice="on" class="tts-choice-btn tts-seg-btn theme-btn-option active">
-                <span aria-hidden="true">🔊</span>
-                <span>ON</span>
-              </button>
+            <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2">
+              <span class="step-badge">3</span>
+              <span>音声読み上げ</span>
+            </h2>
+            <p class="text-xs sm:text-sm font-semibold mt-1" style="color: var(--text-muted);">
+              出題と同時に問題文を日本語で読み上げます（表示秒数に合わせて速度自動調整）
+            </p>
+          </div>
+
+          <div class="tts-controls-group">
+            <div class="tts-segmented-wrap" role="group" aria-label="音声読み上げ切り替え">
               <button type="button" data-tts-choice="off" class="tts-choice-btn tts-seg-btn theme-btn-option">
                 <span aria-hidden="true">🔇</span>
                 <span>OFF</span>
               </button>
+              <button type="button" data-tts-choice="on" class="tts-choice-btn tts-seg-btn theme-btn-option active">
+                <span aria-hidden="true">🔊</span>
+                <span>ON</span>
+              </button>
             </div>
 
-            <!-- Bottom Row: Full-Width Sample Test Button -->
-            <button id="btn-tts-test" type="button" class="theme-btn-secondary tts-test-full-btn active:scale-[0.99]">
+            <button id="btn-tts-test" type="button" class="theme-btn-secondary tts-test-btn active:scale-[0.99]">
               <span aria-hidden="true">▶</span>
-              <span>音声テスト（現在の秒数で試聴）</span>
+              <span>音声テスト</span>
             </button>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <!-- Full-Width Start Button -->
       <button id="btn-start" type="button" class="theme-btn-primary w-full py-4 sm:py-5 px-6 rounded-2xl font-extrabold text-xl sm:text-2xl shadow-lg cursor-pointer transition-transform active:scale-[0.99]">
@@ -766,101 +782,87 @@
       'use strict';
 
       // ======================================================================
-      // 1. Complete 27-Item Pool & Standard Textbook Values
+      // 1. Trigonometric Problem Pool & Exact Answers (0°〜180°, 27 items)
       // ======================================================================
       const ANGLES = [0, 30, 45, 60, 90, 120, 135, 150, 180];
-      const FUNCTIONS = ['sin', 'cos', 'tan'];
+      const FUNCS = ['sin', 'cos', 'tan'];
 
       const EXACT_ANSWERS = {
-        // sin (0° to 180°)
-        'sin_0':   { type: 'int', val: '0' },
-        'sin_30':  { type: 'frac', sign: '', num: '1', den: '2' },
-        'sin_45':  { type: 'frac', sign: '', num: '1', den: '√2' },
-        'sin_60':  { type: 'frac', sign: '', num: '√3', den: '2' },
-        'sin_90':  { type: 'int', val: '1' },
-        'sin_120': { type: 'frac', sign: '', num: '√3', den: '2' },
-        'sin_135': { type: 'frac', sign: '', num: '1', den: '√2' },
-        'sin_150': { type: 'frac', sign: '', num: '1', den: '2' },
-        'sin_180': { type: 'int', val: '0' },
+        sin_0:   { type: 'int', val: '0' },
+        sin_30:  { type: 'frac', sign: '', num: '1', den: '2' },
+        sin_45:  { type: 'frac', sign: '', num: '1', den: '√2' },
+        sin_60:  { type: 'frac', sign: '', num: '√3', den: '2' },
+        sin_90:  { type: 'int', val: '1' },
+        sin_120: { type: 'frac', sign: '', num: '√3', den: '2' },
+        sin_135: { type: 'frac', sign: '', num: '1', den: '√2' },
+        sin_150: { type: 'frac', sign: '', num: '1', den: '2' },
+        sin_180: { type: 'int', val: '0' },
 
-        // cos (0° to 180°)
-        'cos_0':   { type: 'int', val: '1' },
-        'cos_30':  { type: 'frac', sign: '', num: '√3', den: '2' },
-        'cos_45':  { type: 'frac', sign: '', num: '1', den: '√2' },
-        'cos_60':  { type: 'frac', sign: '', num: '1', den: '2' },
-        'cos_90':  { type: 'int', val: '0' },
-        'cos_120': { type: 'frac', sign: '−', num: '1', den: '2' },
-        'cos_135': { type: 'frac', sign: '−', num: '1', den: '√2' },
-        'cos_150': { type: 'frac', sign: '−', num: '√3', den: '2' },
-        'cos_180': { type: 'int', val: '−1' },
+        cos_0:   { type: 'int', val: '1' },
+        cos_30:  { type: 'frac', sign: '', num: '√3', den: '2' },
+        cos_45:  { type: 'frac', sign: '', num: '1', den: '√2' },
+        cos_60:  { type: 'frac', sign: '', num: '1', den: '2' },
+        cos_90:  { type: 'int', val: '0' },
+        cos_120: { type: 'frac', sign: '−', num: '1', den: '2' },
+        cos_135: { type: 'frac', sign: '−', num: '1', den: '√2' },
+        cos_150: { type: 'frac', sign: '−', num: '√3', den: '2' },
+        cos_180: { type: 'int', val: '−1' },
 
-        // tan (0° to 180°, including tan 90° = なし)
-        'tan_0':   { type: 'int', val: '0' },
-        'tan_30':  { type: 'frac', sign: '', num: '1', den: '√3' },
-        'tan_45':  { type: 'int', val: '1' },
-        'tan_60':  { type: 'rad', sign: '', digit: '3' },
-        'tan_90':  { type: 'undefined', val: 'なし' },
-        'tan_120': { type: 'rad', sign: '−', digit: '3' },
-        'tan_135': { type: 'int', val: '−1' },
-        'tan_150': { type: 'frac', sign: '−', num: '1', den: '√3' },
-        'tan_180': { type: 'int', val: '0' }
+        tan_0:   { type: 'int', val: '0' },
+        tan_30:  { type: 'frac', sign: '', num: '1', den: '√3' },
+        tan_45:  { type: 'int', val: '1' },
+        tan_60:  { type: 'rad', sign: '', digit: '3' },
+        tan_90:  { type: 'undefined', val: 'なし' },
+        tan_120: { type: 'rad', sign: '−', digit: '3' },
+        tan_135: { type: 'int', val: '−1' },
+        tan_150: { type: 'frac', sign: '−', num: '1', den: '√3' },
+        tan_180: { type: 'int', val: '0' }
       };
 
       function buildFullPool() {
         const pool = [];
-        for (const func of FUNCTIONS) {
-          for (const angle of ANGLES) {
-            pool.push({ func, angle });
+        for (let i = 0; i < FUNCS.length; i++) {
+          for (let j = 0; j < ANGLES.length; j++) {
+            pool.push({ func: FUNCS[i], angle: ANGLES[j] });
           }
         }
-        return pool; // 27 items
+        return pool;
       }
 
       function shuffleArray(array) {
-        const copy = array.slice();
-        for (let i = copy.length - 1; i > 0; i--) {
+        const arr = array.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          const temp = copy[i];
-          copy[i] = copy[j];
-          copy[j] = temp;
+          const temp = arr[i];
+          arr[i] = arr[j];
+          arr[j] = temp;
         }
-        return copy;
+        return arr;
       }
 
       // ======================================================================
       // 2. Application State
       // ======================================================================
       const state = {
-        screen: 'title',        // 'title' | 'settings' | 'countdown' | 'active' | 'finish' | 'answers'
-        durationSec: 2.0,       // Default 2.0s (range 0.5s to 30.0s in 0.5s increments)
-        questionCount: 10,      // Default 10 (10 | 15 | 20 | 27)
-        theme: 'light',         // 'light' | 'dark'
-        ttsEnabled: true,       // Japanese Web Speech API readout
-
-        // Active session runtime
+        screen: 'title',
+        theme: 'light',
+        durationSec: 2.0,
+        questionCount: 10,
+        ttsEnabled: true,
         questions: [],
         currentIndex: 0,
         isPaused: false,
-        questionStartTime: 0,
         pausedElapsed: 0,
+        questionStartTime: 0,
         rafId: null,
         countdownTimerId: null
       };
 
       // ======================================================================
-      // 3. DOM Cache
+      // 3. Cached DOM References
       // ======================================================================
       const el = {
         toast: document.getElementById('toast-banner'),
-        btnTtsToggle: document.getElementById('btn-tts-toggle'),
-        ttsHeaderIcon: document.getElementById('tts-header-icon'),
-        ttsHeaderLabel: document.getElementById('tts-header-label'),
-        btnThemeToggle: document.getElementById('btn-theme-toggle'),
-        themeIcon: document.getElementById('theme-icon'),
-        themeLabel: document.getElementById('theme-label'),
-        btnFullscreen: document.getElementById('btn-fullscreen'),
-        fullscreenLabel: document.getElementById('fullscreen-label'),
-
         screens: {
           title: document.getElementById('screen-title'),
           settings: document.getElementById('screen-settings'),
@@ -869,11 +871,15 @@
           finish: document.getElementById('screen-finish'),
           answers: document.getElementById('screen-answers')
         },
-
-        // Screen A: Title
+        themeIcon: document.getElementById('theme-icon'),
+        themeLabel: document.getElementById('theme-label'),
+        ttsHeaderIcon: document.getElementById('tts-header-icon'),
+        ttsHeaderLabel: document.getElementById('tts-header-label'),
+        fullscreenLabel: document.getElementById('fullscreen-label'),
+        btnThemeToggle: document.getElementById('btn-theme-toggle'),
+        btnTtsToggle: document.getElementById('btn-tts-toggle'),
+        btnFullscreen: document.getElementById('btn-fullscreen'),
         btnGoSettings: document.getElementById('btn-go-settings'),
-
-        // Screen B: Settings
         btnBackToTitle: document.getElementById('btn-back-to-title'),
         btnDurationMinus: document.getElementById('btn-duration-minus'),
         btnDurationPlus: document.getElementById('btn-duration-plus'),
@@ -883,36 +889,28 @@
         ttsChoiceBtns: document.querySelectorAll('.tts-choice-btn'),
         btnTtsTest: document.getElementById('btn-tts-test'),
         btnStart: document.getElementById('btn-start'),
-
-        // Screen C: Countdown
         countdownValue: document.getElementById('countdown-value'),
         btnCancelCountdown: document.getElementById('btn-cancel-countdown'),
-
-        // Screen D: Active Quiz
-        questionNumber: document.getElementById('question-number'),
-        pausedBadge: document.getElementById('paused-badge'),
         progressCounter: document.getElementById('progress-counter'),
+        pausedBadge: document.getElementById('paused-badge'),
         btnPause: document.getElementById('btn-pause'),
         btnAbort: document.getElementById('btn-abort'),
+        questionNumber: document.getElementById('question-number'),
         questionDisplay: document.getElementById('question-display'),
         mathFunc: document.getElementById('math-func'),
         mathAngle: document.getElementById('math-angle'),
         progressFill: document.getElementById('progress-fill'),
-
-        // Screen E: Finish
         finishCountText: document.getElementById('finish-count-text'),
         btnCheckAnswers: document.getElementById('btn-check-answers'),
         btnRetryFromFinish: document.getElementById('btn-retry-from-finish'),
         btnSettingsFromFinish: document.getElementById('btn-settings-from-finish'),
-
-        // Screen F: Answer Review
         answersSubtitle: document.getElementById('answers-subtitle'),
         answersGrid: document.getElementById('answers-grid'),
         answerNavBtns: document.querySelectorAll('.answer-nav-btn')
       };
 
       // ======================================================================
-      // 4. Japanese Speech Synthesis (ja-JP) with Dynamic Speed Scaling
+      // 4. Japanese Speech Synthesis (ja-JP) with Anti-Clipping Safeguards
       // ======================================================================
       const FUNC_READINGS = {
         sin: 'サイン',
@@ -920,17 +918,66 @@
         tan: 'タンジェント'
       };
 
+      // Priority keywords for offline / OS-native Japanese voices (localService === true)
+      const LOCAL_JA_VOICE_PRIORITY = [
+        'microsoft haruka',
+        'microsoft ayumi',
+        'microsoft ichiro',
+        'microsoft sayaka',
+        'microsoft nanami',
+        'kyoko',
+        'otoya',
+        'hattori',
+        'o-ren'
+      ];
+
+      // Global reference to prevent premature Garbage Collection mid-utterance
+      window.__activeUtterance = null;
+
       let preferredJaVoice = null;
       let speechTimerId = null;
+      let speechRequestToken = 0;
+
+      function isJapaneseVoice(voice) {
+        if (!voice || !voice.lang) return false;
+        const lang = voice.lang.toLowerCase().replace('_', '-');
+        return lang === 'ja-jp' || lang.startsWith('ja');
+      }
+
+      function scoreJapaneseVoice(voice) {
+        let score = 0;
+        const nameLower = (voice.name || '').toLowerCase();
+        const langLower = (voice.lang || '').toLowerCase().replace('_', '-');
+
+        // Strongly prioritize OS-native offline voices over cloud-streamed voices
+        if (voice.localService === true) {
+          score += 1000;
+        }
+        if (langLower === 'ja-jp') {
+          score += 100;
+        }
+        for (let i = 0; i < LOCAL_JA_VOICE_PRIORITY.length; i++) {
+          if (nameLower.includes(LOCAL_JA_VOICE_PRIORITY[i])) {
+            score += 50 - i;
+            break;
+          }
+        }
+        return score;
+      }
 
       function loadJapaneseVoice() {
         if (!('speechSynthesis' in window)) return;
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
-        preferredJaVoice =
-          voices.find((v) => v.lang === 'ja-JP') ||
-          voices.find((v) => v.lang && v.lang.toLowerCase().startsWith('ja')) ||
-          null;
+
+        const jaVoices = voices.filter(isJapaneseVoice);
+        if (jaVoices.length === 0) {
+          preferredJaVoice = null;
+          return;
+        }
+
+        jaVoices.sort((a, b) => scoreJapaneseVoice(b) - scoreJapaneseVoice(a));
+        preferredJaVoice = jaVoices[0];
       }
 
       if ('speechSynthesis' in window) {
@@ -939,38 +986,80 @@
       }
 
       /**
-       * Adjusts utterance.rate based on durationSec so readout finishes
-       * comfortably before the next question appears:
-       * 0.5s -> 3.0 | 1.0s -> 2.3 | 1.5s -> 1.8 | 2.0s -> 1.35 | >=3.0s -> 1.15
+       * Computes utterance.rate so the spoken phrase finishes well inside
+       * the allotted display duration (even for short 1.5s intervals or longer
+       * phrases like "タンジェント135ど").
        */
-      function computeSpeechRate(durationSec) {
+      function computeSpeechRate(durationSec, phrase) {
         const d = Math.max(0.5, durationSec);
-        let rate = 1.15;
-        if (d >= 3.0) {
-          rate = 1.15;
-        } else if (d >= 2.0) {
-          rate = 1.35 - ((d - 2.0) / 1.0) * (1.35 - 1.15);
-        } else if (d >= 1.5) {
-          rate = 1.8 - ((d - 1.5) / 0.5) * (1.8 - 1.35);
-        } else if (d >= 1.0) {
-          rate = 2.3 - ((d - 1.0) / 0.5) * (2.3 - 1.8);
-        } else {
-          rate = 3.0 - ((d - 0.5) / 0.5) * (3.0 - 2.3);
-        }
-        return Math.max(0.8, Math.min(3.5, Math.round(rate * 100) / 100));
+        // Base speech duration estimate at rate 1.0 (~0.14s per character in Japanese TTS)
+        const charCount = phrase ? phrase.length : 6;
+        const baseDurationSec = Math.max(0.85, charCount * 0.145);
+        // Target completing speech within ~68% of the slide duration (leaving safety margin)
+        const targetSpeechSec = Math.max(0.32, d * 0.68);
+        const requiredRate = baseDurationSec / targetSpeechSec;
+
+        let floorRate = 1.15;
+        if (d <= 0.5) floorRate = 3.0;
+        else if (d <= 1.0) floorRate = 2.35;
+        else if (d <= 1.5) floorRate = 1.85;
+        else if (d <= 2.0) floorRate = 1.4;
+
+        const finalRate = Math.max(floorRate, requiredRate);
+        return Math.max(1.0, Math.min(3.5, Math.round(finalRate * 100) / 100));
       }
 
       function cancelSpeech() {
+        speechRequestToken += 1;
         if (speechTimerId !== null) {
           clearTimeout(speechTimerId);
           speechTimerId = null;
         }
         if ('speechSynthesis' in window) {
           try {
-            window.speechSynthesis.cancel();
+            if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+              window.speechSynthesis.cancel();
+            }
           } catch (err) {
             // Ignore cancellation errors
           }
+        }
+        window.__activeUtterance = null;
+      }
+
+      /**
+       * Wakes up the browser's audio hardware & TTS synthesizer on user gesture
+       * (Start button / Enter / Space) using a silent utterance so Q1 never clips.
+       */
+      function warmUpSpeechEngine() {
+        if (!state.ttsEnabled || !('speechSynthesis' in window)) return;
+        try {
+          if (!preferredJaVoice) {
+            loadJapaneseVoice();
+          }
+          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            return;
+          }
+          const silentUtterance = new SpeechSynthesisUtterance(' ');
+          silentUtterance.lang = 'ja-JP';
+          if (preferredJaVoice) {
+            silentUtterance.voice = preferredJaVoice;
+          }
+          silentUtterance.volume = 0;
+          silentUtterance.rate = 2.0;
+
+          window.__activeUtterance = silentUtterance;
+          const releaseRef = () => {
+            if (window.__activeUtterance === silentUtterance) {
+              window.__activeUtterance = null;
+            }
+          };
+          silentUtterance.onend = releaseRef;
+          silentUtterance.onerror = releaseRef;
+
+          window.speechSynthesis.speak(silentUtterance);
+        } catch (err) {
+          // Ignore warm-up errors on restricted environments
         }
       }
 
@@ -983,33 +1072,68 @@
           return;
         }
 
-        const wasSpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
-        cancelSpeech();
+        if (!preferredJaVoice) {
+          loadJapaneseVoice();
+        }
 
-        const triggerUtterance = () => {
+        speechRequestToken += 1;
+        const currentToken = speechRequestToken;
+
+        if (speechTimerId !== null) {
+          clearTimeout(speechTimerId);
+          speechTimerId = null;
+        }
+
+        const isBusy = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+        if (isBusy) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (err) {
+            // Ignore cancellation errors
+          }
+        }
+
+        const executeSpeak = () => {
+          if (currentToken !== speechRequestToken) return;
           if (!isTest && (state.screen !== 'active' || state.isPaused || !state.ttsEnabled)) {
             return;
           }
           try {
-            const phrase = `${FUNC_READINGS[func]} ${angle}ど`;
+            if (window.speechSynthesis.paused) {
+              window.speechSynthesis.resume();
+            }
+            // Space-free phrase avoids artificial mid-word pauses
+            const phrase = `${FUNC_READINGS[func]}${angle}ど`;
             const utterance = new SpeechSynthesisUtterance(phrase);
             utterance.lang = 'ja-JP';
             if (preferredJaVoice) {
               utterance.voice = preferredJaVoice;
             }
-            utterance.rate = computeSpeechRate(state.durationSec);
+            utterance.rate = computeSpeechRate(state.durationSec, phrase);
             utterance.pitch = 1.0;
             utterance.volume = 1.0;
+
+            // Keep strong global reference until speech completes or errors
+            window.__activeUtterance = utterance;
+            const cleanupUtterance = () => {
+              if (window.__activeUtterance === utterance) {
+                window.__activeUtterance = null;
+              }
+            };
+            utterance.onend = cleanupUtterance;
+            utterance.onerror = cleanupUtterance;
+
             window.speechSynthesis.speak(utterance);
           } catch (err) {
             // Ignore restricted speech errors
           }
         };
 
-        if (wasSpeaking) {
-          speechTimerId = setTimeout(triggerUtterance, 15);
+        if (isBusy) {
+          // 55ms buffer prevents cancel() from swallowing the next speak() call
+          speechTimerId = setTimeout(executeSpeak, 55);
         } else {
-          triggerUtterance();
+          executeSpeak();
         }
       }
 
@@ -1055,7 +1179,7 @@
           el.themeLabel.textContent = 'ダークモード';
         } else {
           el.themeIcon.textContent = '☀️';
-          el.themeLabel.textContent = '白背景';
+          el.themeLabel.textContent = 'ライト（白背景）';
         }
       }
 
@@ -1127,6 +1251,7 @@
 
       function startDrillSession() {
         clearTimers();
+        warmUpSpeechEngine();
 
         const fullPool = buildFullPool();
         const shuffled = shuffleArray(fullPool);
