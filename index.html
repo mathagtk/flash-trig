@@ -299,15 +299,73 @@
     /* ==========================================================================
        Projector Mathematical Typography
        ========================================================================== */
+    .question-badge-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 0.75rem;
+      padding-bottom: 0.25rem;
+      min-height: clamp(3.5rem, 7vw, 5.5rem);
+      flex-shrink: 0;
+    }
+
+    .math-stage-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1rem;
+      overflow: hidden;
+    }
+
     .math-expression {
       font-family: "Times New Roman", "Cambria Math", "STIX Two Math", Georgia, serif;
       font-size: clamp(4.5rem, 13vw, 10rem);
       font-weight: 700;
       line-height: 1.05;
+      min-height: 2.5em;
       letter-spacing: -0.01em;
       white-space: nowrap;
       user-select: none;
       text-shadow: var(--flash-glow);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Fixed-position two-slot layout for "問題 → 解答 すぐ表示" mode */
+    .math-expression.immediate-mode {
+      font-size: clamp(2.2rem, 8.8vw, 8.0rem);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .math-expression.immediate-mode .math-problem-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 4.55em;
+      flex-shrink: 0;
+    }
+
+    .math-answer-slot {
+      display: none;
+    }
+
+    .math-expression.immediate-mode .math-answer-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      width: 3.75em;
+      flex-shrink: 0;
+      transition: opacity 0.14s ease;
+    }
+
+    .math-expression.immediate-mode .math-answer-slot.is-hidden {
+      visibility: hidden;
+      opacity: 0;
     }
 
     .math-func {
@@ -319,6 +377,37 @@
       font-variant-numeric: lining-nums;
     }
 
+    .math-equals {
+      margin: 0 0.28em;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    .active-answer-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .active-answer-inline .math-answer-wrap {
+      font-size: 1em;
+    }
+
+    .active-answer-inline .answer-undefined-text {
+      font-size: 0.78em;
+    }
+
+    .active-answer-inline .v-bar {
+      height: max(3px, 0.055em);
+    }
+
+    .question-badge-row {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .question-badge {
       font-size: clamp(2.25rem, 5vw, 4.25rem);
       font-weight: 800;
@@ -326,6 +415,28 @@
       letter-spacing: -0.02em;
       user-select: none;
       text-shadow: var(--flash-glow);
+    }
+
+    .phase-pill {
+      position: absolute;
+      left: calc(100% + 0.85rem);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2em 0.65em;
+      border-radius: 9999px;
+      font-size: clamp(0.95rem, 2vw, 1.45rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      background-color: var(--accent-soft);
+      border: 2px solid var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    :root[data-theme="dark"] .phase-pill {
+      color: #00FF41;
+      border-color: #00FF41;
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.25);
     }
 
     .countdown-number {
@@ -447,6 +558,22 @@
       animation: questionPopIn 130ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
+    @keyframes answerRevealIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.94);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .animate-answer-reveal {
+      transform-origin: left center;
+      animation: answerRevealIn 140ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     @keyframes countdownPulse {
       0% {
         opacity: 0.2;
@@ -491,6 +618,10 @@
       background-color: #ef4444;
       box-shadow: 0 0 12px rgba(239, 68, 68, 0.65);
     }
+
+    :root[data-theme="light"] .progress-fill.answer-phase:not(.warning) {
+      background-color: #059669;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -532,7 +663,7 @@
         フラッシュ三角比
       </h1>
       <span class="mt-2 text-xs sm:text-sm font-bold tracking-wider tabular-nums" style="color: var(--text-muted);">
-        2026/11/25 11:37
+        2026/11/25 13:34
       </span>
     </div>
 
@@ -555,31 +686,50 @@
         </button>
       </div>
 
-      <!-- Section 1 Card (Full Width): Display Duration per Question -->
+      <!-- Section 1 Card (Full Width): Drill Mode Selection -->
+      <section class="theme-card rounded-2xl p-4 sm:p-5">
+        <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
+          <span class="step-badge">1</span>
+          <span>出題モード</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <button type="button" data-mode="continuous" class="mode-btn theme-btn-option active py-3 px-4 rounded-xl text-left cursor-pointer flex flex-col justify-center">
+            <span class="font-extrabold text-sm sm:text-base">連続出題（最後に答え合わせ）</span>
+            <span class="text-xs font-semibold mt-0.5 opacity-80">問題を連続表示し、終了後に解答一覧を表示</span>
+          </button>
+          <button type="button" data-mode="immediate" class="mode-btn theme-btn-option py-3 px-4 rounded-xl text-left cursor-pointer flex flex-col justify-center">
+            <span class="font-extrabold text-sm sm:text-base">問題 → 解答 すぐ表示</span>
+            <span class="text-xs font-semibold mt-0.5 opacity-80">1問ごとに自動切り替え（問題＋解答を大画面表示・音声あり）</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Section 2 Card (Full Width): Display Duration per Question (& Answer) -->
       <section class="theme-card rounded-2xl p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
           <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2">
-            <span class="step-badge">1</span>
-            <span>1問あたりの表示秒数</span>
+            <span class="step-badge">2</span>
+            <span id="duration-section-title">1問あたりの表示秒数</span>
           </h2>
           <span class="text-xs font-semibold" style="color: var(--text-muted);">0.5秒〜30.0秒（0.5秒刻み）</span>
         </div>
 
-        <!-- Center Stepper Row -->
+        <!-- Question Duration Stepper Row -->
         <div class="flex items-center justify-center gap-4 sm:gap-7 my-2">
-          <button id="btn-duration-minus" type="button" aria-label="0.5秒減らす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+          <button id="btn-duration-minus" type="button" aria-label="問題の表示秒数を0.5秒減らす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
             − 0.5秒
           </button>
           <div class="min-w-[136px] sm:min-w-[168px] text-center">
             <span id="display-duration" class="text-3xl sm:text-5xl font-extrabold tabular-nums">2.0</span>
             <span class="text-lg sm:text-2xl font-bold ml-1">秒</span>
           </div>
-          <button id="btn-duration-plus" type="button" aria-label="0.5秒増やす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+          <button id="btn-duration-plus" type="button" aria-label="問題の表示秒数を0.5秒増やす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
             ＋ 0.5秒
           </button>
         </div>
 
-        <!-- Preset Row -->
+        <!-- Question Duration Preset Row -->
         <div class="flex flex-wrap items-center justify-center gap-2 mt-2.5">
           <button type="button" data-preset="1.5" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">1.5秒</button>
           <button type="button" data-preset="2" class="preset-btn theme-btn-option active py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">2秒</button>
@@ -589,12 +739,42 @@
           <button type="button" data-preset="7" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">7秒</button>
           <button type="button" data-preset="10" class="preset-btn theme-btn-option py-2 px-3.5 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">10秒</button>
         </div>
+
+        <!-- Answer Duration Sub-Section (Visible when Immediate Answer Mode is selected) -->
+        <div id="answer-duration-panel" class="hidden mt-4 pt-4 border-t" style="border-color: var(--border-subtle);">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 class="text-sm sm:text-base font-extrabold">解答の表示秒数</h3>
+            <span class="text-xs font-semibold" style="color: var(--text-muted);">0.5秒〜30.0秒（0.5秒刻み）</span>
+          </div>
+
+          <div class="flex items-center justify-center gap-4 sm:gap-7 my-1.5">
+            <button id="btn-answer-duration-minus" type="button" aria-label="解答の表示秒数を0.5秒減らす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+              − 0.5秒
+            </button>
+            <div class="min-w-[136px] sm:min-w-[168px] text-center">
+              <span id="display-answer-duration" class="text-3xl sm:text-4xl font-extrabold tabular-nums">1.5</span>
+              <span class="text-lg sm:text-xl font-bold ml-1">秒</span>
+            </div>
+            <button id="btn-answer-duration-plus" type="button" aria-label="解答の表示秒数を0.5秒増やす" class="theme-btn-secondary px-4 py-2 rounded-xl font-extrabold text-sm sm:text-base cursor-pointer active:scale-95 whitespace-nowrap">
+              ＋ 0.5秒
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
+            <button type="button" data-answer-preset="1" class="answer-preset-btn theme-btn-option py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">1秒</button>
+            <button type="button" data-answer-preset="1.5" class="answer-preset-btn theme-btn-option active py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">1.5秒</button>
+            <button type="button" data-answer-preset="2" class="answer-preset-btn theme-btn-option py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">2秒</button>
+            <button type="button" data-answer-preset="3" class="answer-preset-btn theme-btn-option py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">3秒</button>
+            <button type="button" data-answer-preset="4" class="answer-preset-btn theme-btn-option py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">4秒</button>
+            <button type="button" data-answer-preset="5" class="answer-preset-btn theme-btn-option py-1.5 px-3 rounded-xl font-bold text-sm cursor-pointer whitespace-nowrap">5秒</button>
+          </div>
+        </div>
       </section>
 
-      <!-- Section 2 Card (Full Width): Question Count (4-Col Grid, 2-Col on <= 520px) -->
+      <!-- Section 3 Card (Full Width): Question Count (4-Col Grid, 2-Col on <= 520px) -->
       <section class="theme-card rounded-2xl p-4 sm:p-5">
         <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2 mb-3">
-          <span class="step-badge">2</span>
+          <span class="step-badge">3</span>
           <span>出題数（重複なしランダム）</span>
         </h2>
 
@@ -606,15 +786,15 @@
         </div>
       </section>
 
-      <!-- Section 3 Card (Horizontal Layout: Left Title/Desc, Right Segmented Toggle + Test) -->
+      <!-- Section 4 Card (Horizontal Layout: Left Title/Desc, Right Segmented Toggle + Test) -->
       <section class="theme-card rounded-2xl p-4 sm:p-5">
         <div class="tts-card-row">
           <div>
             <h2 class="text-base sm:text-lg font-extrabold flex items-center gap-2">
-              <span class="step-badge">3</span>
+              <span class="step-badge">4</span>
               <span>音声読み上げ</span>
             </h2>
-            <p class="text-xs sm:text-sm font-semibold mt-1" style="color: var(--text-muted);">
+            <p id="tts-section-desc" class="text-xs sm:text-sm font-semibold mt-1" style="color: var(--text-muted);">
               出題と同時に問題文を日本語で読み上げます（表示秒数に合わせて速度自動調整）
             </p>
           </div>
@@ -664,7 +844,7 @@
        ======================================================================== -->
   <section id="screen-active" class="hidden flex-1 flex flex-col justify-between pb-5 pt-14 sm:pt-16">
     <!-- Top Progress & Controls Bar -->
-    <div class="w-full px-5 sm:px-10 flex flex-wrap items-center justify-between gap-3">
+    <div class="w-full px-5 sm:px-10 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
       <div class="flex items-center gap-3">
         <span id="progress-counter" class="text-lg sm:text-2xl font-extrabold tabular-nums" style="color: var(--text-muted);">
           Q1 / 10
@@ -684,11 +864,18 @@
       </div>
     </div>
 
-    <!-- Center Question Badge & Giant Expression -->
-    <div class="flex-1 flex flex-col items-center justify-center px-4 overflow-hidden">
-      <div id="question-number" class="question-badge mb-3 sm:mb-5">Q1</div>
+    <!-- Fixed Upper Question Number Area (Never shifts when vertical fractions appear) -->
+    <div class="question-badge-header">
+      <div class="question-badge-row">
+        <div id="question-number" class="question-badge">Q1</div>
+        <span id="phase-badge" class="phase-pill hidden">解答</span>
+      </div>
+    </div>
+
+    <!-- Center Giant Expression Stage -->
+    <div class="math-stage-area">
       <div id="question-display" class="math-expression text-center">
-        <span id="math-func" class="math-func">sin</span><span id="math-angle" class="math-angle">30°</span>
+        <span class="math-problem-slot"><span id="math-func" class="math-func">sin</span><span id="math-angle" class="math-angle">30°</span></span><span id="immediate-answer-group" class="math-answer-slot is-hidden"><span id="math-equals" class="math-equals">=</span><span id="active-answer-slot" class="active-answer-inline"></span></span>
       </div>
     </div>
 
@@ -793,35 +980,35 @@
       const FUNCS = ['sin', 'cos', 'tan'];
 
       const EXACT_ANSWERS = {
-        sin_0:   { type: 'int', val: '0' },
-        sin_30:  { type: 'frac', sign: '', num: '1', den: '2' },
-        sin_45:  { type: 'frac', sign: '', num: '1', den: '√2' },
-        sin_60:  { type: 'frac', sign: '', num: '√3', den: '2' },
-        sin_90:  { type: 'int', val: '1' },
-        sin_120: { type: 'frac', sign: '', num: '√3', den: '2' },
-        sin_135: { type: 'frac', sign: '', num: '1', den: '√2' },
-        sin_150: { type: 'frac', sign: '', num: '1', den: '2' },
-        sin_180: { type: 'int', val: '0' },
+        sin_0:   { type: 'int', val: '0', reading: 'ゼロ' },
+        sin_30:  { type: 'frac', sign: '', num: '1', den: '2', reading: '2ぶんの1' },
+        sin_45:  { type: 'frac', sign: '', num: '1', den: '√2', reading: 'ルート2ぶんの1' },
+        sin_60:  { type: 'frac', sign: '', num: '√3', den: '2', reading: '2ぶんのルート3' },
+        sin_90:  { type: 'int', val: '1', reading: 'イチ' },
+        sin_120: { type: 'frac', sign: '', num: '√3', den: '2', reading: '2ぶんのルート3' },
+        sin_135: { type: 'frac', sign: '', num: '1', den: '√2', reading: 'ルート2ぶんの1' },
+        sin_150: { type: 'frac', sign: '', num: '1', den: '2', reading: '2ぶんの1' },
+        sin_180: { type: 'int', val: '0', reading: 'ゼロ' },
 
-        cos_0:   { type: 'int', val: '1' },
-        cos_30:  { type: 'frac', sign: '', num: '√3', den: '2' },
-        cos_45:  { type: 'frac', sign: '', num: '1', den: '√2' },
-        cos_60:  { type: 'frac', sign: '', num: '1', den: '2' },
-        cos_90:  { type: 'int', val: '0' },
-        cos_120: { type: 'frac', sign: '−', num: '1', den: '2' },
-        cos_135: { type: 'frac', sign: '−', num: '1', den: '√2' },
-        cos_150: { type: 'frac', sign: '−', num: '√3', den: '2' },
-        cos_180: { type: 'int', val: '−1' },
+        cos_0:   { type: 'int', val: '1', reading: 'イチ' },
+        cos_30:  { type: 'frac', sign: '', num: '√3', den: '2', reading: '2ぶんのルート3' },
+        cos_45:  { type: 'frac', sign: '', num: '1', den: '√2', reading: 'ルート2ぶんの1' },
+        cos_60:  { type: 'frac', sign: '', num: '1', den: '2', reading: '2ぶんの1' },
+        cos_90:  { type: 'int', val: '0', reading: 'ゼロ' },
+        cos_120: { type: 'frac', sign: '−', num: '1', den: '2', reading: 'マイナス2ぶんの1' },
+        cos_135: { type: 'frac', sign: '−', num: '1', den: '√2', reading: 'マイナスルート2ぶんの1' },
+        cos_150: { type: 'frac', sign: '−', num: '√3', den: '2', reading: 'マイナス2ぶんのルート3' },
+        cos_180: { type: 'int', val: '−1', reading: 'マイナス1' },
 
-        tan_0:   { type: 'int', val: '0' },
-        tan_30:  { type: 'frac', sign: '', num: '1', den: '√3' },
-        tan_45:  { type: 'int', val: '1' },
-        tan_60:  { type: 'rad', sign: '', digit: '3' },
-        tan_90:  { type: 'undefined', val: 'なし' },
-        tan_120: { type: 'rad', sign: '−', digit: '3' },
-        tan_135: { type: 'int', val: '−1' },
-        tan_150: { type: 'frac', sign: '−', num: '1', den: '√3' },
-        tan_180: { type: 'int', val: '0' }
+        tan_0:   { type: 'int', val: '0', reading: 'ゼロ' },
+        tan_30:  { type: 'frac', sign: '', num: '1', den: '√3', reading: 'ルート3ぶんの1' },
+        tan_45:  { type: 'int', val: '1', reading: 'イチ' },
+        tan_60:  { type: 'rad', sign: '', digit: '3', reading: 'ルート3' },
+        tan_90:  { type: 'undefined', val: 'なし', reading: 'なし' },
+        tan_120: { type: 'rad', sign: '−', digit: '3', reading: 'マイナスルート3' },
+        tan_135: { type: 'int', val: '−1', reading: 'マイナス1' },
+        tan_150: { type: 'frac', sign: '−', num: '1', den: '√3', reading: 'マイナスルート3ぶんの1' },
+        tan_180: { type: 'int', val: '0', reading: 'ゼロ' }
       };
 
       function buildFullPool() {
@@ -851,11 +1038,14 @@
       const state = {
         screen: 'title',
         theme: 'light',
+        mode: 'continuous', // 'continuous' | 'immediate'
         durationSec: 2.0,
+        answerDurationSec: 1.5,
         questionCount: 10,
         ttsEnabled: true,
         questions: [],
         currentIndex: 0,
+        phase: 'question', // 'question' | 'answer'
         isPaused: false,
         pausedElapsed: 0,
         questionStartTime: 0,
@@ -886,11 +1076,19 @@
         btnFullscreen: document.getElementById('btn-fullscreen'),
         btnGoSettings: document.getElementById('btn-go-settings'),
         btnBackToTitle: document.getElementById('btn-back-to-title'),
+        modeBtns: document.querySelectorAll('.mode-btn'),
+        durationSectionTitle: document.getElementById('duration-section-title'),
         btnDurationMinus: document.getElementById('btn-duration-minus'),
         btnDurationPlus: document.getElementById('btn-duration-plus'),
         displayDuration: document.getElementById('display-duration'),
         presetBtns: document.querySelectorAll('.preset-btn'),
+        answerDurationPanel: document.getElementById('answer-duration-panel'),
+        btnAnswerDurationMinus: document.getElementById('btn-answer-duration-minus'),
+        btnAnswerDurationPlus: document.getElementById('btn-answer-duration-plus'),
+        displayAnswerDuration: document.getElementById('display-answer-duration'),
+        answerPresetBtns: document.querySelectorAll('.answer-preset-btn'),
         countBtns: document.querySelectorAll('.count-btn'),
+        ttsSectionDesc: document.getElementById('tts-section-desc'),
         ttsChoiceBtns: document.querySelectorAll('.tts-choice-btn'),
         btnTtsTest: document.getElementById('btn-tts-test'),
         btnStart: document.getElementById('btn-start'),
@@ -901,9 +1099,13 @@
         btnPause: document.getElementById('btn-pause'),
         btnAbort: document.getElementById('btn-abort'),
         questionNumber: document.getElementById('question-number'),
+        phaseBadge: document.getElementById('phase-badge'),
         questionDisplay: document.getElementById('question-display'),
         mathFunc: document.getElementById('math-func'),
         mathAngle: document.getElementById('math-angle'),
+        immediateAnswerGroup: document.getElementById('immediate-answer-group'),
+        mathEquals: document.getElementById('math-equals'),
+        activeAnswerSlot: document.getElementById('active-answer-slot'),
         progressFill: document.getElementById('progress-fill'),
         finishCountText: document.getElementById('finish-count-text'),
         btnCheckAnswers: document.getElementById('btn-check-answers'),
@@ -915,7 +1117,46 @@
       };
 
       // ======================================================================
-      // 4. Japanese Speech Synthesis (ja-JP) with Anti-Clipping Safeguards
+      // 4. Toast Notification & Fullscreen Helpers
+      // ======================================================================
+      let toastTimerId = null;
+
+      function showToast(message) {
+        if (!el.toast) return;
+        el.toast.textContent = message;
+        el.toast.classList.remove('opacity-0');
+        el.toast.classList.add('opacity-100');
+        if (toastTimerId !== null) {
+          clearTimeout(toastTimerId);
+        }
+        toastTimerId = setTimeout(() => {
+          el.toast.classList.remove('opacity-100');
+          el.toast.classList.add('opacity-0');
+          toastTimerId = null;
+        }, 2600);
+      }
+
+      function updateFullscreenLabel() {
+        const isFs = Boolean(document.fullscreenElement);
+        el.fullscreenLabel.textContent = isFs ? '全画面解除' : '全画面';
+      }
+
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+          } else {
+            await document.exitFullscreen();
+          }
+        } catch (err) {
+          showToast('この環境では全画面表示が制限されています');
+        }
+      }
+
+      document.addEventListener('fullscreenchange', updateFullscreenLabel);
+
+      // ======================================================================
+      // 5. Japanese Text-to-Speech (TTS) Engine (Anti-Clip & Rate Scaling)
       // ======================================================================
       const FUNC_READINGS = {
         sin: 'サイン',
@@ -923,300 +1164,260 @@
         tan: 'タンジェント'
       };
 
-      // Priority keywords for offline / OS-native Japanese voices (localService === true)
-      const LOCAL_JA_VOICE_PRIORITY = [
-        'microsoft haruka',
-        'microsoft ayumi',
-        'microsoft ichiro',
-        'microsoft sayaka',
-        'microsoft nanami',
-        'kyoko',
-        'otoya',
-        'hattori',
-        'o-ren'
-      ];
-
-      // Global reference to prevent premature Garbage Collection mid-utterance
       window.__activeUtterance = null;
-
-      let preferredJaVoice = null;
-      let speechTimerId = null;
       let speechRequestToken = 0;
-
-      function isJapaneseVoice(voice) {
-        if (!voice || !voice.lang) return false;
-        const lang = voice.lang.toLowerCase().replace('_', '-');
-        return lang === 'ja-jp' || lang.startsWith('ja');
-      }
-
-      function scoreJapaneseVoice(voice) {
-        let score = 0;
-        const nameLower = (voice.name || '').toLowerCase();
-        const langLower = (voice.lang || '').toLowerCase().replace('_', '-');
-
-        // Strongly prioritize OS-native offline voices over cloud-streamed voices
-        if (voice.localService === true) {
-          score += 1000;
-        }
-        if (langLower === 'ja-jp') {
-          score += 100;
-        }
-        for (let i = 0; i < LOCAL_JA_VOICE_PRIORITY.length; i++) {
-          if (nameLower.includes(LOCAL_JA_VOICE_PRIORITY[i])) {
-            score += 50 - i;
-            break;
-          }
-        }
-        return score;
-      }
+      let speechDelayTimerId = null;
+      let selectedJaVoice = null;
 
       function loadJapaneseVoice() {
         if (!('speechSynthesis' in window)) return;
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        const jaVoices = voices.filter(isJapaneseVoice);
-        if (jaVoices.length === 0) {
-          preferredJaVoice = null;
-          return;
-        }
+        const jaVoices = voices.filter((v) => {
+          const lang = (v.lang || '').toLowerCase();
+          return lang === 'ja' || lang === 'ja-jp' || lang.startsWith('ja-');
+        });
 
-        jaVoices.sort((a, b) => scoreJapaneseVoice(b) - scoreJapaneseVoice(a));
-        preferredJaVoice = jaVoices[0];
+        if (jaVoices.length === 0) return;
+
+        const preferredNames = ['Haruka', 'Ayumi', 'Ichiro', 'Nanami', 'Kyoko', 'Otoya', 'Google 日本語'];
+        const localJaVoices = jaVoices.filter((v) => v.localService);
+        const candidates = localJaVoices.length > 0 ? localJaVoices : jaVoices;
+
+        for (let i = 0; i < preferredNames.length; i++) {
+          const match = candidates.find((v) => v.name && v.name.includes(preferredNames[i]));
+          if (match) {
+            selectedJaVoice = match;
+            return;
+          }
+        }
+        selectedJaVoice = candidates[0];
       }
 
       if ('speechSynthesis' in window) {
         loadJapaneseVoice();
-        window.speechSynthesis.onvoiceschanged = loadJapaneseVoice;
+        if (typeof window.speechSynthesis.addEventListener === 'function') {
+          window.speechSynthesis.addEventListener('voiceschanged', loadJapaneseVoice);
+        } else {
+          window.speechSynthesis.onvoiceschanged = loadJapaneseVoice;
+        }
       }
 
-      /**
-       * Computes utterance.rate so the spoken phrase finishes well inside
-       * the allotted display duration (even for short 1.5s intervals or longer
-       * phrases like "タンジェント135ど").
-       */
-      function computeSpeechRate(durationSec, phrase) {
-        const d = Math.max(0.5, durationSec);
-        // Base speech duration estimate at rate 1.0 (~0.14s per character in Japanese TTS)
-        const charCount = phrase ? phrase.length : 6;
-        const baseDurationSec = Math.max(0.85, charCount * 0.145);
-        // Target completing speech within ~68% of the slide duration (leaving safety margin)
-        const targetSpeechSec = Math.max(0.32, d * 0.68);
-        const requiredRate = baseDurationSec / targetSpeechSec;
-
-        let floorRate = 1.15;
-        if (d <= 0.5) floorRate = 3.0;
-        else if (d <= 1.0) floorRate = 2.35;
-        else if (d <= 1.5) floorRate = 1.85;
-        else if (d <= 2.0) floorRate = 1.4;
-
-        const finalRate = Math.max(floorRate, requiredRate);
-        return Math.max(1.0, Math.min(3.5, Math.round(finalRate * 100) / 100));
+      function computeSpeechRate(text, targetDurationSec) {
+        const charCount = Math.max(2, text.length);
+        const usableSec = Math.max(0.32, targetDurationSec * 0.82 - 0.08);
+        const estimatedBaseSec = charCount * 0.16;
+        const rawRate = estimatedBaseSec / usableSec;
+        return Math.min(2.6, Math.max(0.95, Number(rawRate.toFixed(2))));
       }
 
       function cancelSpeech() {
         speechRequestToken += 1;
-        if (speechTimerId !== null) {
-          clearTimeout(speechTimerId);
-          speechTimerId = null;
+        if (speechDelayTimerId !== null) {
+          clearTimeout(speechDelayTimerId);
+          speechDelayTimerId = null;
         }
+        window.__activeUtterance = null;
         if ('speechSynthesis' in window) {
           try {
             if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
               window.speechSynthesis.cancel();
             }
-          } catch (err) {
-            // Ignore cancellation errors
+          } catch (e) {
+            // Ignore synthesis cancel errors in restricted sandboxes
           }
         }
-        window.__activeUtterance = null;
       }
 
-      /**
-       * Wakes up the browser's audio hardware & TTS synthesizer on user gesture
-       * (Start button / Enter / Space) using a silent utterance so Q1 never clips.
-       */
       function warmUpSpeechEngine() {
         if (!state.ttsEnabled || !('speechSynthesis' in window)) return;
         try {
-          if (!preferredJaVoice) {
-            loadJapaneseVoice();
-          }
-          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-            return;
-          }
-          const silentUtterance = new SpeechSynthesisUtterance(' ');
-          silentUtterance.lang = 'ja-JP';
-          if (preferredJaVoice) {
-            silentUtterance.voice = preferredJaVoice;
-          }
-          silentUtterance.volume = 0;
-          silentUtterance.rate = 2.0;
-
-          window.__activeUtterance = silentUtterance;
-          const releaseRef = () => {
-            if (window.__activeUtterance === silentUtterance) {
+          loadJapaneseVoice();
+          const warmup = new SpeechSynthesisUtterance(' ');
+          warmup.lang = 'ja-JP';
+          if (selectedJaVoice) warmup.voice = selectedJaVoice;
+          warmup.volume = 0;
+          warmup.rate = 2.0;
+          window.__activeUtterance = warmup;
+          warmup.onend = () => {
+            if (window.__activeUtterance === warmup) {
               window.__activeUtterance = null;
             }
           };
-          silentUtterance.onend = releaseRef;
-          silentUtterance.onerror = releaseRef;
-
-          window.speechSynthesis.speak(silentUtterance);
-        } catch (err) {
-          // Ignore warm-up errors on restricted environments
+          warmup.onerror = () => {
+            if (window.__activeUtterance === warmup) {
+              window.__activeUtterance = null;
+            }
+          };
+          window.speechSynthesis.speak(warmup);
+        } catch (e) {
+          // Ignore warmup errors
         }
       }
 
-      function speakProblem(func, angle, isTest = false) {
-        if (!isTest && !state.ttsEnabled) return;
+      function speakJapaneseText(text, targetDurationSec, forceSpeak, onComplete) {
+        if (!forceSpeak && !state.ttsEnabled) return;
         if (!('speechSynthesis' in window)) {
-          if (isTest) {
+          if (forceSpeak) {
             showToast('このブラウザは音声読み上げに対応していません');
           }
           return;
         }
 
-        if (!preferredJaVoice) {
+        const wasBusy = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+        cancelSpeech();
+        const token = speechRequestToken;
+
+        const dispatchUtterance = () => {
+          if (token !== speechRequestToken) return;
           loadJapaneseVoice();
-        }
 
-        speechRequestToken += 1;
-        const currentToken = speechRequestToken;
-
-        if (speechTimerId !== null) {
-          clearTimeout(speechTimerId);
-          speechTimerId = null;
-        }
-
-        const isBusy = window.speechSynthesis.speaking || window.speechSynthesis.pending;
-        if (isBusy) {
-          try {
-            window.speechSynthesis.cancel();
-          } catch (err) {
-            // Ignore cancellation errors
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          if (selectedJaVoice) {
+            utterance.voice = selectedJaVoice;
           }
-        }
+          utterance.volume = 1.0;
+          utterance.pitch = 1.0;
+          utterance.rate = computeSpeechRate(text, targetDurationSec);
 
-        const executeSpeak = () => {
-          if (currentToken !== speechRequestToken) return;
-          if (!isTest && (state.screen !== 'active' || state.isPaused || !state.ttsEnabled)) {
-            return;
-          }
+          window.__activeUtterance = utterance;
+
+          utterance.onend = () => {
+            if (window.__activeUtterance === utterance) {
+              window.__activeUtterance = null;
+            }
+            if (token === speechRequestToken && typeof onComplete === 'function') {
+              onComplete();
+            }
+          };
+
+          utterance.onerror = () => {
+            if (window.__activeUtterance === utterance) {
+              window.__activeUtterance = null;
+            }
+          };
+
           try {
-            if (window.speechSynthesis.paused) {
-              window.speechSynthesis.resume();
-            }
-            // Space-free phrase avoids artificial mid-word pauses
-            const phrase = `${FUNC_READINGS[func]}${angle}ど`;
-            const utterance = new SpeechSynthesisUtterance(phrase);
-            utterance.lang = 'ja-JP';
-            if (preferredJaVoice) {
-              utterance.voice = preferredJaVoice;
-            }
-            utterance.rate = computeSpeechRate(state.durationSec, phrase);
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-
-            // Keep strong global reference until speech completes or errors
-            window.__activeUtterance = utterance;
-            const cleanupUtterance = () => {
-              if (window.__activeUtterance === utterance) {
-                window.__activeUtterance = null;
-              }
-            };
-            utterance.onend = cleanupUtterance;
-            utterance.onerror = cleanupUtterance;
-
             window.speechSynthesis.speak(utterance);
-          } catch (err) {
-            // Ignore restricted speech errors
+          } catch (e) {
+            window.__activeUtterance = null;
           }
         };
 
-        if (isBusy) {
-          // 55ms buffer prevents cancel() from swallowing the next speak() call
-          speechTimerId = setTimeout(executeSpeak, 55);
+        if (wasBusy) {
+          speechDelayTimerId = setTimeout(() => {
+            speechDelayTimerId = null;
+            dispatchUtterance();
+          }, 55);
         } else {
-          executeSpeak();
+          dispatchUtterance();
+        }
+      }
+
+      function speakProblem(func, angle, forceSpeak, onComplete) {
+        const funcWord = FUNC_READINGS[func] || func;
+        const text = `${funcWord}${angle}ど`;
+        speakJapaneseText(text, state.durationSec, forceSpeak, onComplete);
+      }
+
+      function speakAnswer(func, angle, forceSpeak, onComplete) {
+        const key = `${func}_${angle}`;
+        const ans = EXACT_ANSWERS[key];
+        if (!ans) return;
+        const targetSec = state.mode === 'immediate' ? state.answerDurationSec : 1.5;
+        speakJapaneseText(ans.reading, targetSec, forceSpeak, onComplete);
+      }
+
+      function runTestSpeech() {
+        if (state.mode === 'immediate') {
+          speakProblem('sin', 30, true, () => {
+            speechDelayTimerId = setTimeout(() => {
+              speechDelayTimerId = null;
+              speakAnswer('sin', 30, true);
+            }, 140);
+          });
+        } else {
+          speakProblem('sin', 30, true);
         }
       }
 
       // ======================================================================
-      // 5. Toast Helper
-      // ======================================================================
-      let toastTimeoutId = null;
-
-      function showToast(message) {
-        el.toast.textContent = message;
-        el.toast.classList.remove('opacity-0');
-        el.toast.classList.add('opacity-100');
-        if (toastTimeoutId) clearTimeout(toastTimeoutId);
-        toastTimeoutId = setTimeout(() => {
-          el.toast.classList.remove('opacity-100');
-          el.toast.classList.add('opacity-0');
-        }, 2500);
-      }
-
-      // ======================================================================
-      // 6. Screen Navigation & Global Header Controls
+      // 6. Screen Navigation & Theme Switching
       // ======================================================================
       function switchScreen(targetScreen) {
         state.screen = targetScreen;
         Object.keys(el.screens).forEach((key) => {
+          const node = el.screens[key];
+          if (!node) return;
           if (key === targetScreen) {
-            el.screens[key].classList.remove('hidden');
+            node.classList.remove('hidden');
           } else {
-            el.screens[key].classList.add('hidden');
+            node.classList.add('hidden');
           }
         });
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-          document.activeElement.blur();
-        }
+        window.scrollTo(0, 0);
       }
 
       function toggleTheme() {
         state.theme = state.theme === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', state.theme);
-        if (state.theme === 'light') {
+        if (state.theme === 'dark') {
+          el.themeIcon.textContent = '☀️';
+          el.themeLabel.textContent = 'ライトモード';
+        } else {
           el.themeIcon.textContent = '🌙';
           el.themeLabel.textContent = 'ダークモード';
-        } else {
-          el.themeIcon.textContent = '☀️';
-          el.themeLabel.textContent = 'ライト（白背景）';
         }
       }
 
-      function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {
-            showToast('全画面表示が制限されています（F11キーをお試しください）');
-          });
+      // ======================================================================
+      // 7. Settings State & UI Synchronization
+      // ======================================================================
+      function setMode(mode) {
+        state.mode = mode === 'immediate' ? 'immediate' : 'continuous';
+        el.modeBtns.forEach((btn) => {
+          btn.classList.toggle('active', btn.dataset.mode === state.mode);
+        });
+
+        if (state.mode === 'immediate') {
+          el.durationSectionTitle.textContent = '問題の表示秒数';
+          el.answerDurationPanel.classList.remove('hidden');
+          el.ttsSectionDesc.textContent = '問題と解答の表示に合わせて日本語で自動読み上げします（秒数に合わせて速度自動調整）';
         } else {
-          document.exitFullscreen().catch(() => {});
+          el.durationSectionTitle.textContent = '1問あたりの表示秒数';
+          el.answerDurationPanel.classList.add('hidden');
+          el.ttsSectionDesc.textContent = '出題と同時に問題文を日本語で読み上げます（表示秒数に合わせて速度自動調整）';
         }
       }
 
-      document.addEventListener('fullscreenchange', () => {
-        el.fullscreenLabel.textContent = document.fullscreenElement ? '全画面解除' : '全画面';
-      });
-
-      // ======================================================================
-      // 7. Setup Controls Synchronization
-      // ======================================================================
       function updateDurationUI() {
         el.displayDuration.textContent = state.durationSec.toFixed(1);
         el.presetBtns.forEach((btn) => {
-          const val = parseFloat(btn.dataset.preset);
-          btn.classList.toggle('active', Math.abs(val - state.durationSec) < 0.01);
+          const presetVal = parseFloat(btn.dataset.preset);
+          btn.classList.toggle('active', Math.abs(presetVal - state.durationSec) < 0.01);
         });
       }
 
-      function setDuration(seconds) {
-        const clamped = Math.max(0.5, Math.min(30.0, Math.round(seconds * 10) / 10));
+      function setDuration(newSec) {
+        const clamped = Math.min(30.0, Math.max(0.5, Math.round(newSec * 2) / 2));
         state.durationSec = clamped;
         updateDurationUI();
+      }
+
+      function updateAnswerDurationUI() {
+        el.displayAnswerDuration.textContent = state.answerDurationSec.toFixed(1);
+        el.answerPresetBtns.forEach((btn) => {
+          const presetVal = parseFloat(btn.dataset.answerPreset);
+          btn.classList.toggle('active', Math.abs(presetVal - state.answerDurationSec) < 0.01);
+        });
+      }
+
+      function setAnswerDuration(newSec) {
+        const clamped = Math.min(30.0, Math.max(0.5, Math.round(newSec * 2) / 2));
+        state.answerDurationSec = clamped;
+        updateAnswerDurationUI();
       }
 
       function setQuestionCount(count) {
@@ -1227,20 +1428,20 @@
       }
 
       function setTtsEnabled(enabled) {
-        state.ttsEnabled = enabled;
-        el.ttsHeaderIcon.textContent = enabled ? '🔊' : '🔇';
-        el.ttsHeaderLabel.textContent = enabled ? '音声 ON' : '音声 OFF';
-        el.ttsChoiceBtns.forEach((btn) => {
-          const isOn = btn.dataset.ttsChoice === 'on';
-          btn.classList.toggle('active', isOn === enabled);
-        });
-        if (!enabled) {
+        state.ttsEnabled = Boolean(enabled);
+        if (!state.ttsEnabled) {
           cancelSpeech();
         }
+        el.ttsHeaderIcon.textContent = state.ttsEnabled ? '🔊' : '🔇';
+        el.ttsHeaderLabel.textContent = state.ttsEnabled ? '音声 ON' : '音声 OFF';
+        el.ttsChoiceBtns.forEach((btn) => {
+          const isBtnOn = btn.dataset.ttsChoice === 'on';
+          btn.classList.toggle('active', isBtnOn === state.ttsEnabled);
+        });
       }
 
       // ======================================================================
-      // 8. Drill Session Execution (Countdown -> Continuous Flash -> Finish)
+      // 8. Countdown & Active Flash Drill Lifecycle
       // ======================================================================
       function clearTimers() {
         if (state.rafId !== null) {
@@ -1254,87 +1455,122 @@
         cancelSpeech();
       }
 
+      function startActiveLoop() {
+        switchScreen('active');
+        state.questionStartTime = performance.now();
+        renderQuestion(state.currentIndex);
+        state.rafId = requestAnimationFrame(tickActiveLoop);
+      }
+
       function startDrillSession() {
         clearTimers();
-        warmUpSpeechEngine();
 
-        const fullPool = buildFullPool();
-        const shuffled = shuffleArray(fullPool);
+        const shuffled = shuffleArray(buildFullPool());
         state.questions = shuffled.slice(0, state.questionCount);
         state.currentIndex = 0;
+        state.phase = 'question';
         state.isPaused = false;
         state.pausedElapsed = 0;
+        updatePauseUI();
+        warmUpSpeechEngine();
 
-        runCountdown();
-      }
-
-      function runCountdown() {
-        switchScreen('countdown');
         let count = 3;
-        renderCountdownNumber(count);
-
-        state.countdownTimerId = setInterval(() => {
-          count -= 1;
-          if (count >= 1) {
-            renderCountdownNumber(count);
-          } else {
-            clearInterval(state.countdownTimerId);
-            state.countdownTimerId = null;
-            beginActiveQuestions();
-          }
-        }, 800);
-      }
-
-      function renderCountdownNumber(num) {
-        el.countdownValue.textContent = String(num);
+        el.countdownValue.textContent = String(count);
         el.countdownValue.classList.remove('animate-countdown');
         void el.countdownValue.offsetWidth;
         el.countdownValue.classList.add('animate-countdown');
-      }
+        switchScreen('countdown');
 
-      function beginActiveQuestions() {
-        switchScreen('active');
-        state.isPaused = false;
-        updatePauseUI();
-        renderQuestion(0);
-        state.questionStartTime = performance.now();
-        state.rafId = requestAnimationFrame(tickActiveLoop);
+        state.countdownTimerId = setInterval(() => {
+          count -= 1;
+          if (count > 0) {
+            el.countdownValue.textContent = String(count);
+            el.countdownValue.classList.remove('animate-countdown');
+            void el.countdownValue.offsetWidth;
+            el.countdownValue.classList.add('animate-countdown');
+          } else {
+            clearInterval(state.countdownTimerId);
+            state.countdownTimerId = null;
+            startActiveLoop();
+          }
+        }, 800);
       }
 
       function renderQuestion(index) {
         const item = state.questions[index];
         const total = state.questions.length;
 
+        state.phase = 'question';
         el.questionNumber.textContent = `Q${index + 1}`;
         el.progressCounter.textContent = `Q${index + 1} / ${total}`;
+        el.phaseBadge.classList.add('hidden');
+
         el.mathFunc.textContent = item.func;
         el.mathAngle.textContent = `${item.angle}°`;
+
+        if (state.mode === 'immediate') {
+          el.questionDisplay.classList.add('immediate-mode');
+          el.immediateAnswerGroup.classList.add('is-hidden');
+          el.immediateAnswerGroup.classList.remove('animate-answer-reveal');
+          el.activeAnswerSlot.innerHTML = '';
+        } else {
+          el.questionDisplay.classList.remove('immediate-mode');
+          el.immediateAnswerGroup.classList.add('is-hidden');
+          el.activeAnswerSlot.innerHTML = '';
+        }
 
         el.questionDisplay.classList.remove('animate-pop-in');
         void el.questionDisplay.offsetWidth;
         el.questionDisplay.classList.add('animate-pop-in');
 
-        el.progressFill.classList.remove('warning');
+        el.progressFill.classList.remove('warning', 'answer-phase');
         el.progressFill.style.transform = 'scaleX(1)';
 
         speakProblem(item.func, item.angle, false);
       }
 
+      function renderImmediateAnswer(index) {
+        const item = state.questions[index];
+
+        state.phase = 'answer';
+        el.phaseBadge.classList.remove('hidden');
+
+        // Keep problem position completely fixed; reveal "= answer" in the right slot
+        el.activeAnswerSlot.innerHTML = buildAnswerHTML(item.func, item.angle);
+        el.immediateAnswerGroup.classList.remove('is-hidden', 'animate-answer-reveal');
+        void el.immediateAnswerGroup.offsetWidth;
+        el.immediateAnswerGroup.classList.add('animate-answer-reveal');
+
+        el.progressFill.classList.remove('warning');
+        el.progressFill.classList.add('answer-phase');
+        el.progressFill.style.transform = 'scaleX(1)';
+
+        speakAnswer(item.func, item.angle, false);
+      }
+
       function tickActiveLoop(now) {
         if (state.screen !== 'active' || state.isPaused) return;
 
-        const durationMs = state.durationSec * 1000;
+        const currentPhaseDurationSec = state.phase === 'answer' ? state.answerDurationSec : state.durationSec;
+        const durationMs = currentPhaseDurationSec * 1000;
         const elapsed = now - state.questionStartTime;
 
         if (elapsed >= durationMs) {
-          const nextIndex = state.currentIndex + 1;
-          if (nextIndex < state.questions.length) {
-            state.currentIndex = nextIndex;
-            state.questionStartTime = now - (elapsed - durationMs);
-            renderQuestion(state.currentIndex);
+          const overflow = elapsed - durationMs;
+          if (state.mode === 'immediate' && state.phase === 'question') {
+            state.questionStartTime = now - overflow;
+            renderImmediateAnswer(state.currentIndex);
             state.rafId = requestAnimationFrame(tickActiveLoop);
           } else {
-            finishDrillSession();
+            const nextIndex = state.currentIndex + 1;
+            if (nextIndex < state.questions.length) {
+              state.currentIndex = nextIndex;
+              state.questionStartTime = now - overflow;
+              renderQuestion(state.currentIndex);
+              state.rafId = requestAnimationFrame(tickActiveLoop);
+            } else {
+              finishDrillSession();
+            }
           }
           return;
         }
@@ -1478,7 +1714,10 @@
 
       function showAnswerReview() {
         const total = state.questions.length;
-        el.answersSubtitle.textContent = `今回の出題順（全${total}問・1問 ${state.durationSec.toFixed(1)}秒）の模範解答`;
+        const timingSummary = state.mode === 'immediate'
+          ? `全${total}問・問題 ${state.durationSec.toFixed(1)}秒 / 解答 ${state.answerDurationSec.toFixed(1)}秒`
+          : `全${total}問・1問 ${state.durationSec.toFixed(1)}秒`;
+        el.answersSubtitle.textContent = `今回の出題順（${timingSummary}）の模範解答`;
         el.answersGrid.innerHTML = '';
 
         state.questions.forEach((item, index) => {
@@ -1524,6 +1763,12 @@
         switchScreen('title');
       });
 
+      el.modeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setMode(btn.dataset.mode);
+        });
+      });
+
       el.btnDurationMinus.addEventListener('click', () => {
         setDuration(state.durationSec - 0.5);
       });
@@ -1535,6 +1780,20 @@
       el.presetBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
           setDuration(parseFloat(btn.dataset.preset));
+        });
+      });
+
+      el.btnAnswerDurationMinus.addEventListener('click', () => {
+        setAnswerDuration(state.answerDurationSec - 0.5);
+      });
+
+      el.btnAnswerDurationPlus.addEventListener('click', () => {
+        setAnswerDuration(state.answerDurationSec + 0.5);
+      });
+
+      el.answerPresetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          setAnswerDuration(parseFloat(btn.dataset.answerPreset));
         });
       });
 
@@ -1550,9 +1809,7 @@
         });
       });
 
-      el.btnTtsTest.addEventListener('click', () => {
-        speakProblem('sin', 30, true);
-      });
+      el.btnTtsTest.addEventListener('click', runTestSpeech);
 
       el.btnStart.addEventListener('click', startDrillSession);
       el.btnCancelCountdown.addEventListener('click', returnToSettings);
@@ -1627,7 +1884,9 @@
       });
 
       // Initialize UI
+      setMode('continuous');
       updateDurationUI();
+      updateAnswerDurationUI();
       setQuestionCount(10);
       setTtsEnabled(true);
     })();
